@@ -5,6 +5,7 @@ import android.os.Environment;
 import android.util.Log;
 
 public class IOUtils {
+    private static String android = "/Android";//内部路径
 
 
     public static void testMethord(String path){
@@ -21,8 +22,15 @@ public class IOUtils {
             //Android10以上
             if (verifyStoragePath(filePath)){
                 //路径是起步正确的
-                //Environment.DIRECTORY_SCREENSHOTS
                 Log.e("liyuhao",filePath);
+                //Environment.DIRECTORY_SCREENSHOTS
+                if (filePath.startsWith(storagePath+android)){
+                    //进入内部存储路径，假设为内部存储，并不一定
+                    Log.e("liyuhao","内部存储");
+                }else {
+                    //外服存储路径
+                    Log.e("liyuhao","外部存储");
+                }
             }
 
 

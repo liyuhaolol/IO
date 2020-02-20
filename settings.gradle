@@ -1,2 +1,2 @@
-include ':app', ':utils_io'
+include ':app', ':utils_io', ':lib_https'
 rootProject.name='IO'

@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="spa.lyh.cn.lib_https" >
+    <application
+        android:networkSecurityConfig="@xml/network_security">
+
+    </application>
+</manifest>
