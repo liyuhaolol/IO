@@ -24,14 +24,15 @@ public class MainActivity extends PermissionActivity {
             doAfterPermission();
         }
     }
-
+    //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
+    //getObbDir().getPath()+"/Q"
     @Override
     public void doAfterPermission() {
         //IOUtils.testMethord("/sdcard/A.txt");
         //IOUtils.testMethord("/sdcard");
         downloadFile(MainActivity.this,
                 "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3208238474,2536510412&fm=26&gp=0.jpg",
-                getObbDir().getPath()+"/Q",
+                Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_PICTURES+"/Q",
                 new DisposeDownloadListener() {
                     @Override
                     public void onSuccess(String filePath, String fileName) {
@@ -57,7 +58,7 @@ public class MainActivity extends PermissionActivity {
 
 
     public static Call downloadFile(Context context, String url, String path, DisposeDownloadListener listener) {
-        return CommonOkHttpClient.getInstance(context).downloadFile(
+        return CommonOkHttpClient.getInstance(context).downloadFile(context,
                 CommonRequest.createGetRequest(url, null, null, true),
                 new DisposeDataHandle(listener, path, true));
     }

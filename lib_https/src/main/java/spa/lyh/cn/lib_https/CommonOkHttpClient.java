@@ -79,10 +79,10 @@ public class CommonOkHttpClient {
         return call;
     }
 
-    public Call downloadFile(Request request, DisposeDataHandle handle) {
+    public Call downloadFile(Context context,Request request, DisposeDataHandle handle) {
         if (request != null){
             Call call = mOkHttpClient.newCall(request);
-            call.enqueue(new CommonFileCallback(handle));
+            call.enqueue(new CommonFileCallback(context,handle));
             return call;
         }else {
             return null;

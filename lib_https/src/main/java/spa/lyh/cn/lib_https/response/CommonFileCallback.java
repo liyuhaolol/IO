@@ -1,5 +1,7 @@
 package spa.lyh.cn.lib_https.response;
 
+import android.content.ContentValues;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -20,6 +22,7 @@ import spa.lyh.cn.lib_https.listener.DisposeDownloadListener;
 import spa.lyh.cn.lib_https.model.Progress;
 import spa.lyh.cn.lib_https.model.Success;
 import spa.lyh.cn.lib_https.response.base.CommonBase;
+import spa.lyh.cn.utils_io.IOUtils;
 
 
 /**
@@ -50,10 +53,15 @@ public class CommonFileCallback extends CommonBase implements Callback {
     private String mFilePath;
     private boolean devMode;
 
-    public CommonFileCallback(DisposeDataHandle handle) {
+    private IOUtils utils;
+
+    private Context context;
+
+    public CommonFileCallback(Context context,DisposeDataHandle handle) {
         this.mListener = handle.downloadListener;
         this.mFilePath = handle.mSource;
         this.devMode = handle.devMode;
+        this.context = context;
         this.mDeliveryHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -124,13 +132,13 @@ public class CommonFileCallback extends CommonBase implements Callback {
 
 ////////////////////////////
 
-
+        utils = new IOUtils();
         int length;//每一块的长度
         byte[] buffer = new byte[2048];//每一段的长度
         InputStream inputStream = null;
-        checkLocalFilePath(mFilePath);
-        String filePath = mFilePath+"/"+filename;
-        File file = new File(filePath);
+        //checkLocalFilePath(mFilePath);
+        //String filePath = mFilePath+"/"+filename;
+        //File file = new File(filePath);
         FileOutputStream fos = null;
 
 
@@ -143,7 +151,12 @@ public class CommonFileCallback extends CommonBase implements Callback {
         try {
 
             inputStream  = response.body().byteStream();//输入流
-            fos  = new FileOutputStream(file);
+            fos  = utils.getFileOutputStream(context,mFilePath,filename);
+            if (fos == null){
+                mDeliveryHandler.obtainMessage(FAILURE_MESSAGE, new OkHttpException(OkHttpException.OTHER_ERROR, EMPTY_RESPONSE)).sendToTarget();
+                return;
+            }
+
             sumLength = response.body().contentLength();//文件总大小
 
 
@@ -198,7 +211,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
                 e.printStackTrace();
             }
         }
-        Success success = new Success(filePath,filename);
+        Success success = new Success(utils.getFilePath(),utils.getFileName());
         mDeliveryHandler.sendMessageDelayed(mDeliveryHandler.obtainMessage(SUCCESS_MESSAGE,success),50);
     }
 
