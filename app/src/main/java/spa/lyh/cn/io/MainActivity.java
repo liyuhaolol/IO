@@ -37,8 +37,8 @@ public class MainActivity extends PermissionActivity {
         //https://downloads.openwrt.org/releases/19.07.1/targets/x86/64/packages/comgt-directip_0.32-32_x86_64.ipk
         //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
         downloadFile(MainActivity.this,
-                "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
-                Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DOWNLOADS + "/Q",
+                "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3208238474,2536510412&fm=26&gp=0.jpg",
+                Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/Q",
                 new DisposeDownloadListener() {
                     @Override
                     public void onSuccess(String filePath, String fileName) {
@@ -65,9 +65,8 @@ public class MainActivity extends PermissionActivity {
 
     public static Call downloadFile(Context context, String url, String path, DisposeDownloadListener listener) {
         RequestParams params = new RequestParams();
-        params.put("Accept-Encoding","identity");
         return CommonOkHttpClient.getInstance(context).downloadFile(context,
-                CommonRequest.createGetRequest(url, null, params, true),
+                CommonRequest.createDownloadRequest(url, null, params, true),
                 new DisposeDataHandle(listener, path, true));
     }
 }

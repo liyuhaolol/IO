@@ -123,13 +123,14 @@ public class IOUtils {
                 }else {
                     //进入公有存储空间
                     Log.e("liyuhao","公有存储空间");
+                    String mimeType = getMimeType(fileName);
                     ContentValues values = new ContentValues();
                     //这里用download，其实用谁都无所谓，只是一个string
                     values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-                    values.put(MediaStore.Downloads.MIME_TYPE, getMimeType(fileName));//MediaStore对应类型名
+                    values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
                     values.put(MediaStore.Downloads.RELATIVE_PATH,
                             mainPath.substring(storagePath.length()+1));//公共目录下目录名
-                    Uri external = getUri(mainPath);
+                    Uri external = getUri(mainPath,mimeType);
                     ContentResolver resolver = context.getContentResolver();
 
                     Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
@@ -158,12 +159,32 @@ public class IOUtils {
     }
 
     @TargetApi(29)
-    private Uri getUri(String mainPath){
-        /*MediaStore.Downloads.EXTERNAL_CONTENT_URI;
-        MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;*/
-        return MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+    private Uri getUri(String path,String mimeType){
+        String pubPath = Environment.getExternalStorageDirectory().getPath();
+        if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOWNLOADS)){
+            return MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DCIM)){
+            if (mimeType.startsWith("video")){
+                return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            }else {
+                return MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            }
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_MOVIES)){
+            return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_PICTURES)){
+            return MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_ALARMS)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_MUSIC)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_NOTIFICATIONS)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_PODCASTS)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_RINGTONES)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }
+        return null;
     }
 
     private String getMimeType(String fileName){

@@ -187,4 +187,17 @@ public class CommonRequest {
                 .build();
         return request;
     }
+
+
+    /**
+     * ressemble the params to the url
+     *
+     * @param url 链接
+     * @param params 参数
+     * @return request
+     */
+    public static Request createDownloadRequest(String url, RequestParams params, RequestParams headers, boolean isDev) {
+        headers.put("Accept-Encoding","identity");
+        return createGetRequest(url,params,headers,isDev);
+    }
 }
