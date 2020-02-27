@@ -10,5 +10,5 @@ public interface DisposeDownloadListener{
 
 	void onFailure(Object reasonObj);
 
-	void onProgress(int progress, String currentSize, String sumSize);
+	void onProgress(boolean haveFileSize,int progress, String currentSize, String sumSize);
 }

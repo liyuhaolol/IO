@@ -5,14 +5,24 @@ package spa.lyh.cn.lib_https.model;
  */
 
 public class Progress {
+    private boolean haveFileSize;
     private int progress;
     private String currentSize;
     private String sumSize;
 
-    public Progress(int progress, String currentSize,String sumSize){
+    public Progress(boolean haveFileSize,int progress, String currentSize,String sumSize){
+        this.haveFileSize = haveFileSize;
         this.progress = progress;
         this.currentSize = currentSize;
         this.sumSize = sumSize;
+    }
+
+    public boolean haveFileSize() {
+        return haveFileSize;
+    }
+
+    public void setHaveFileSize(boolean haveFileSize) {
+        this.haveFileSize = haveFileSize;
     }
 
     public void setProgress(int progress) {

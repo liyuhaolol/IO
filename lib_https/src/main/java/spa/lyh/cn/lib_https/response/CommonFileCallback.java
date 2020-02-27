@@ -68,7 +68,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
                 switch (msg.what) {
                     case PROGRESS_MESSAGE:
                         Progress p = (Progress) msg.obj;
-                        mListener.onProgress(p.getProgress(),p.getCurrentSize(),p.getSumSize());
+                        mListener.onProgress(p.haveFileSize(),p.getProgress(),p.getCurrentSize(),p.getSumSize());
                         break;
                     case SUCCESS_MESSAGE:
                         Success success = (Success) msg.obj;
@@ -162,7 +162,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
 
             if (sumLength > 0){
                 //这里应该发送一下总大小，已经进度为0
-                p = new Progress(0,convertFileSize(0),convertFileSize(sumLength));
+                p = new Progress(true,0,convertFileSize(0),convertFileSize(sumLength));
                 if (devMode){
                     Log.e(TAG,p.getProgress()+"%   "+p.getCurrentSize()+"/"+p.getSumSize());
                 }
@@ -177,7 +177,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
                     //判断整型进度去重只传100次0到100
                     if (currentSize != lastSize){
                         lastSize = currentSize;
-                        p = new Progress(lastSize,convertFileSize(currentLength),convertFileSize(sumLength));
+                        p = new Progress(true,lastSize,convertFileSize(currentLength),convertFileSize(sumLength));
                         if (devMode){
                             Log.e(TAG,p.getProgress()+"%   "+p.getCurrentSize()+"/"+p.getSumSize());
                         }
@@ -186,12 +186,25 @@ public class CommonFileCallback extends CommonBase implements Callback {
                 }
                 fos.flush();
             }else {
-                //输出失败，解析错误
+                //无法获取到对应的文件总长度
+                p = new Progress(false,0,convertFileSize(0),"");
                 if (devMode){
-                    Log.e(TAG,IO_LENGTH_MSG);
+                    Log.e(TAG,"无法获取到文件流长度");
+                    Log.e(TAG,"已下载"+p.getCurrentSize());
                 }
-                mDeliveryHandler.obtainMessage(FAILURE_MESSAGE, new OkHttpException(OkHttpException.IO_ERROR, IO_LENGTH_MSG)).sendToTarget();
-                return;
+
+                mDeliveryHandler.obtainMessage(PROGRESS_MESSAGE, p).sendToTarget();
+                while ((length = inputStream.read(buffer)) != -1) {
+                    fos.write(buffer, 0, length);
+                    currentLength += length;
+
+                    p = new Progress(false,0,convertFileSize(currentLength),"");
+                    if (devMode){
+                        Log.e(TAG,"已下载"+p.getCurrentSize());
+                    }
+                    mDeliveryHandler.obtainMessage(PROGRESS_MESSAGE, p).sendToTarget();
+                }
+                fos.flush();
             }
 
         } catch (Exception e) {
