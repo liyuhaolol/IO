@@ -341,6 +341,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
         //已经将文件名按照.分为2段,分别验证是否合法
         front = syncFileName(front,false);
         behind = syncFileName(behind,true);
+        behind = behind.toLowerCase();
 
         return front+behind;
     }

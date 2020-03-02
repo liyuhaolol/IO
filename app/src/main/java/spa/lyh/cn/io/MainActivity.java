@@ -22,9 +22,11 @@ public class MainActivity extends PermissionActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (hasPermission(NOT_REQUIRED_LOAD_METHOD, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            doAfterPermission();
+        if (hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+            //doAfterPermission();
         }
+        Log.e("liyuhao",
+                new IOUtils().createFileName(Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DOWNLOADS + "/Q","5-140FGZ248-53.gif"));
     }
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
     //getObbDir().getPath()+"/Q"
@@ -37,8 +39,8 @@ public class MainActivity extends PermissionActivity {
         //https://downloads.openwrt.org/releases/19.07.1/targets/x86/64/packages/comgt-directip_0.32-32_x86_64.ipk
         //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
         downloadFile(MainActivity.this,
-                "https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3208238474,2536510412&fm=26&gp=0.jpg",
-                Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DCIM + "/Q",
+                "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
+                Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DOWNLOADS + "/Q",
                 new DisposeDownloadListener() {
                     @Override
                     public void onSuccess(String filePath, String fileName) {

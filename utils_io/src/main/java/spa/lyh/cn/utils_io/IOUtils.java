@@ -14,7 +14,11 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class IOUtils {
     private static String android = "/Android";//内部路径
@@ -98,11 +102,9 @@ public class IOUtils {
     }
 
 
-
-
     public FileOutputStream getFileOutputStream(Context context,String dirPath, String fileName) throws FileNotFoundException {
         String storagePath = Environment.getExternalStorageDirectory().getPath();
-
+        String lowFileName = getLowSuffixRightFileName(fileName);
         if (dirPath.startsWith("/sdcard")){
             //非标准写法,转换为标准写法
             mainPath = storagePath + dirPath.substring(7);
@@ -119,14 +121,14 @@ public class IOUtils {
                 if (mainPath.startsWith(storagePath+android)){
                     Log.e("liyuhao","私有存储空间");
                     //进入私有存储空间
-                    return new FileOutputStream(ioUnder9(mainPath,fileName));
+                    return new FileOutputStream(ioUnder9(mainPath,lowFileName));
                 }else {
                     //进入公有存储空间
                     Log.e("liyuhao","公有存储空间");
-                    String mimeType = getMimeType(fileName);
+                    String mimeType = getMimeType(lowFileName);
                     ContentValues values = new ContentValues();
                     //这里用download，其实用谁都无所谓，只是一个string
-                    values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
                     values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
                     values.put(MediaStore.Downloads.RELATIVE_PATH,
                             mainPath.substring(storagePath.length()+1));//公共目录下目录名
@@ -150,7 +152,7 @@ public class IOUtils {
             Log.e("liyuhao","Android9以下");
             if (verifyStoragePath(mainPath)){
                 //路径是起步正确的
-                return new FileOutputStream(ioUnder9(mainPath,fileName));
+                return new FileOutputStream(ioUnder9(mainPath,lowFileName));
             }else{
                 //路径不正确
                 return null;
@@ -271,6 +273,39 @@ public class IOUtils {
 
     }
 
+    public String createFileName(String dirPath,String fileName){
+        int index = 0;
+        File file = new File(dirPath);
+        String newFileName = fileName;
+        String front;
+        String behind;
+        if (file.list() != null){
+            for (String string : file.list()) {
+                if (new File(file.getAbsolutePath(), string).isFile()) {
+                    //list.add(string);
+                    Log.e("liyuhao",string);
+                    String readName = getLowSuffixRightFileName(string);
+                    //Log.e("liyuhao",readName);
+                    if (fileName.equals(readName)){
+                        //存在相同的文件名
+                        index++;
+                        front = getFront(newFileName);
+                        behind = getBehind(newFileName);
+                        if (index == 1){
+                            //第一次出现重名
+                            newFileName = front + " ("+index+")" + behind;
+                        }else {
+                            //多次出现重名
+                            newFileName = front.substring(0,front.length()-2) + index+")" + behind;
+                        }
+                    }
+                }
+            }
+        }
+
+        return newFileName;
+    }
+
     public String getFilePath(){
         return mainPath;
     }
@@ -337,5 +372,65 @@ public class IOUtils {
     private String getName(String filePath){
         String[] strArr = filePath.split("/");
         return strArr[strArr.length-1];
+    }
+
+    private String getLowSuffixRightFileName(String fileName){
+        String front;
+        String behind = "";
+        int  spot = fileName.lastIndexOf(".");
+        if (spot == 0){
+            //点在首位
+            front = DEAFULT_FILE_NAME;
+            behind = fileName.substring(spot);
+
+        }else if (spot == (fileName.length()-1)){
+            //点在末尾
+            front = fileName.substring(0,spot);
+        }else if (spot != -1){
+            //点在中间
+            front = fileName.substring(0,spot);
+            behind = fileName.substring(spot);
+        }else {
+            //不存在点
+            front = fileName;
+        }
+        //如果只有.则去除后缀
+        if(behind.equals(".")){
+            behind = "";
+        }
+        //已经将文件名按照.分为2段,分别验证是否合法
+        front = syncFileName(front,false);
+        behind = syncFileName(behind,true);
+        behind = behind.toLowerCase();
+
+        return front+behind;
+    }
+
+    private String getFront(String fileName){
+        int  spot = fileName.lastIndexOf(".");
+        String front;
+        //不要判断其他情况在这个位置
+        if (spot != -1){
+            //点在中间
+            front = fileName.substring(0,spot);
+        }else {
+            //不存在点
+            front = fileName;
+        }
+        return front;
+    }
+
+    private String getBehind(String fileName){
+        int  spot = fileName.lastIndexOf(".");
+        String behind;
+        //不要判断其他情况在这个位置
+        if (spot != -1){
+            //点在中间
+            behind = fileName.substring(spot);
+        }else {
+            //不存在点
+            behind = "";
+        }
+        return behind;
     }
 }
