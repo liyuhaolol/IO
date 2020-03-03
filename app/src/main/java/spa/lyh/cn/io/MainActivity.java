@@ -23,10 +23,8 @@ public class MainActivity extends PermissionActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            //doAfterPermission();
+            doAfterPermission();
         }
-        Log.e("liyuhao",
-                new IOUtils().createFileName(Environment.getExternalStorageDirectory() + "/" + Environment.DIRECTORY_DOWNLOADS + "/Q","5-140FGZ248-53.gif"));
     }
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
     //getObbDir().getPath()+"/Q"

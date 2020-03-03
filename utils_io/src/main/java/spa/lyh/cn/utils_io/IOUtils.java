@@ -27,6 +27,8 @@ public class IOUtils {
     private String fileName;
     private static final String DEAFULT_FILE_NAME = "deafult";
 
+    private List<String> list;
+
     private static HashMap<String,String> mimeTypeList;
 
     static {
@@ -267,43 +269,64 @@ public class IOUtils {
     private File ioUnder9(String dirPath,String fileName){
         checkLocalFilePath(dirPath);
         //这里按道理，用10的标准，要做文件查重，先暂时搁置
-        this.fileName = fileName;
-        String filePath = dirPath+"/"+fileName;
+        this.fileName = createFileName(dirPath,fileName);
+        String filePath = dirPath+"/"+this.fileName;
         return new File(filePath);
 
     }
 
-    public String createFileName(String dirPath,String fileName){
-        int index = 0;
+    private String createFileName(String dirPath,String fileName){
+        if (list == null){
+            list = new ArrayList<>();
+        }else {
+            list.clear();
+        }
         File file = new File(dirPath);
-        String newFileName = fileName;
-        String front;
-        String behind;
         if (file.list() != null){
             for (String string : file.list()) {
                 if (new File(file.getAbsolutePath(), string).isFile()) {
-                    //list.add(string);
-                    Log.e("liyuhao",string);
-                    String readName = getLowSuffixRightFileName(string);
-                    //Log.e("liyuhao",readName);
-                    if (fileName.equals(readName)){
-                        //存在相同的文件名
-                        index++;
-                        front = getFront(newFileName);
-                        behind = getBehind(newFileName);
-                        if (index == 1){
-                            //第一次出现重名
-                            newFileName = front + " ("+index+")" + behind;
-                        }else {
-                            //多次出现重名
-                            newFileName = front.substring(0,front.length()-2) + index+")" + behind;
-                        }
-                    }
+                    list.add(string);
                 }
             }
         }
 
-        return newFileName;
+        if (list.size() == 0){
+            return getLowSuffixRightFileName(fileName);
+        }
+        return returnName(fileName,0);
+    }
+
+    private String returnName(String fileName,int index){
+        //Log.e("liyuhao","开始遍历");
+        int mIndex = index;
+        String front;
+        String behind;
+        String newFileName = fileName;
+
+        for (String string : list) {
+            String readName = getLowSuffixRightFileName(string);
+            //Log.e("liyuhao",readName);
+            if (fileName.equals(readName)){
+                //存在相同的文件名
+                mIndex++;
+                front = getFront(newFileName);
+                behind = getBehind(newFileName);
+                if (index == 0 && mIndex == 1){
+                    //第一次出现重名
+                    newFileName = front + " ("+mIndex+")" + behind;
+                }else {
+                    //多次出现重名
+                    int place = newFileName.lastIndexOf("(");
+                    newFileName = front.substring(0,place+1) + mIndex+")" + behind;
+                }
+            }
+        }
+
+        if (mIndex == index){
+            return newFileName;
+        }else {
+            return returnName(newFileName,mIndex);
+        }
     }
 
     public String getFilePath(){
