@@ -17,8 +17,6 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class IOUtils {
     private static String android = "/Android";//内部路径
@@ -115,18 +113,18 @@ public class IOUtils {
             mainPath = dirPath;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            Log.e("liyuhao","Android10以上");
+            //Log.e("liyuhao","Android10以上");
             //Android10以上
             if (verifyStoragePath(mainPath)){
                 //路径是起步正确的
                 //Environment.DIRECTORY_SCREENSHOTS
                 if (mainPath.startsWith(storagePath+android)){
-                    Log.e("liyuhao","私有存储空间");
+                    //Log.e("liyuhao","私有存储空间");
                     //进入私有存储空间
                     return new FileOutputStream(ioUnder9(mainPath,lowFileName));
                 }else {
                     //进入公有存储空间
-                    Log.e("liyuhao","公有存储空间");
+                    //Log.e("liyuhao","公有存储空间");
                     String mimeType = getMimeType(lowFileName);
                     ContentValues values = new ContentValues();
                     //这里用download，其实用谁都无所谓，只是一个string
@@ -151,13 +149,68 @@ public class IOUtils {
             }
         }else {
             //Android9以下
-            Log.e("liyuhao","Android9以下");
+            //Log.e("liyuhao","Android9以下");
             if (verifyStoragePath(mainPath)){
                 //路径是起步正确的
                 return new FileOutputStream(ioUnder9(mainPath,lowFileName));
             }else{
                 //路径不正确
                 return null;
+            }
+        }
+    }
+
+
+    public boolean delete(Context context,String filePath){
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
+        String tempPath;
+        if (filePath.startsWith("/sdcard")){
+            tempPath = storagePath + filePath.substring(7);
+        }else {
+            tempPath = filePath;
+        }
+        File file;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            String dirPath = tempPath.substring(0,tempPath.lastIndexOf("/"));
+            String displayName = tempPath.substring(tempPath.lastIndexOf("/")+1);
+            if (verifyStoragePath(dirPath)){
+                if (dirPath.startsWith(storagePath+android)){
+                    //Log.e("liyuhao","私有存储空间");
+                    //进入私有存储空间
+                    file = new File(tempPath);
+                    if (file.exists()){
+                        return file.delete();
+                    }else {
+                        return false;
+                    }
+                }else {
+                    Uri external = getUri(dirPath,getMimeType(displayName));
+                    ContentResolver resolver = context.getContentResolver();
+                    if (external != null){
+                        String params[] = new String[] {displayName};
+                        int yes = resolver.delete(external,MediaStore.Downloads.DISPLAY_NAME + " = ?",params);
+                        if (yes > 0){
+                            return true;
+                        }else {
+                            return false;
+                        }
+                    }else {
+                        return false;
+                    }
+                }
+            }else {
+                return false;
+            }
+        }else {
+            if (verifyStoragePath(tempPath)){
+                file = new File(tempPath);
+                if (file.exists()){
+                    return file.delete();
+                }else {
+                    return false;
+                }
+            }else {
+                return false;
             }
         }
     }
