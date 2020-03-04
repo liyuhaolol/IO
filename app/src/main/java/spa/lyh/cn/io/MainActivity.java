@@ -32,7 +32,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         delete = findViewById(R.id.delete);
         delete.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DCIM+"/Q";
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
