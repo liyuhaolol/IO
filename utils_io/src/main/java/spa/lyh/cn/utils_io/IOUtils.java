@@ -383,11 +383,19 @@ public class IOUtils {
     }
 
     public String getFilePath(){
-        return mainPath;
+        if (mainPath != null){
+            return mainPath;
+        }else {
+            return "";
+        }
     }
 
     public String getFileName(){
-        return fileName;
+        if (fileName != null){
+            return fileName;
+        }else {
+            return "";
+        }
     }
     /**
      * 检查路径是否起码合法
