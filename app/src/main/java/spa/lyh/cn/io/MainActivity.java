@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.FileWriter;
+
 import okhttp3.Call;
 import spa.lyh.cn.lib_https.CommonOkHttpClient;
 import spa.lyh.cn.lib_https.listener.DisposeDataHandle;
@@ -33,6 +35,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         delete.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DCIM+"/Q";
+        new IOUtils().querySignImage(this,"/storage/emulated/0/Download/Q/1.gif");
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"

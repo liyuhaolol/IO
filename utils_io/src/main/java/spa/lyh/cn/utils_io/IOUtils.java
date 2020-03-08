@@ -2,6 +2,7 @@ package spa.lyh.cn.utils_io;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -517,4 +518,65 @@ public class IOUtils {
         }
         return behind;
     }
+
+    /*public void querySignImage(Context context,String filePath) {
+        try {
+            //兼容androidQ和以下版本
+            String queryPathKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? MediaStore.Images.Media.DISPLAY_NAME : MediaStore.Images.Media.DATA;
+            //查询的条件语句
+            String selection = queryPathKey + " = ?";
+            //String selection = queryPathKey + " = ? and relative_path = ?";
+            //查询的sql
+            //Uri：指向外部存储Uri
+            //projection：查询那些结果
+            //selection：查询的where条件
+            //sortOrder：排序
+            Cursor cursor = context
+                    .getContentResolver()
+                    .query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    new String[]{MediaStore.Images.Media._ID,
+                            MediaStore.Images.Media.DATA,
+                            MediaStore.Images.Media.MIME_TYPE,
+                            MediaStore.Images.Media.DISPLAY_NAME,
+                            MediaStore.Images.Media.TITLE},
+                            selection,
+                    new String[]{filePath},
+                    null);
+
+            //是否查询到了
+            if (cursor != null && cursor.moveToFirst()) {
+                //循环取出所有查询到的数据
+                do {
+                    //一张图片的基本信息
+                    int id = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));//uri的id，用于获取图片
+                    String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));//图片的相对路径
+                    String type = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE));//图片类型
+                    String name = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));//图片名字
+                    //String count = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._COUNT));//图片名字
+                    String title = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE));//图片名字
+                    Log.e("liyuhao","path:"+path);
+                    Log.e("liyuhao","type:"+type);
+                    Log.e("liyuhao","name:"+name);
+                    //Log.e("liyuhao","count:"+count);
+                    Log.e("liyuhao","title:"+title);
+                    //根据图片id获取uri，这里的操作是拼接uri
+                    //Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
+                    //官方代码：
+                    *//*Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                    if (contentUri != null) {
+                        Log.e("liyuhao","得到uri");
+                        Log.e("liyuhao",contentUri.getPath());
+                        File file = new File(contentUri.getPath());
+                        if (file.exists()){
+                            Log.e("liyuhao","存在文件");
+                        }
+                    }*//*
+                } while (cursor.moveToNext());
+            }
+            if (cursor != null)
+                cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
 }
