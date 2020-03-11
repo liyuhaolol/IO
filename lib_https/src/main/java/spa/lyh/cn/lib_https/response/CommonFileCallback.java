@@ -224,7 +224,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
                 e.printStackTrace();
             }
         }
-        Success success = new Success(utils.getFilePath() + "/" + utils.getFileName(),utils.getFileName());
+        Success success = new Success(utils.getFilePath(),utils.getFileName());
         mDeliveryHandler.sendMessageDelayed(mDeliveryHandler.obtainMessage(SUCCESS_MESSAGE,success),50);
     }
 

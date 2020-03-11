@@ -3,14 +3,25 @@ package spa.lyh.cn.io;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 
 import okhttp3.Call;
@@ -24,18 +35,38 @@ import spa.lyh.cn.utils_io.IOUtils;
 public class MainActivity extends PermissionActivity implements View.OnClickListener {
     private Button download,delete;
     private String dir;
+    private ImageView image;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        image = findViewById(R.id.img);
         download = findViewById(R.id.download);
         download.setOnClickListener(this);
         delete = findViewById(R.id.delete);
         delete.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DCIM+"/Q";
-        //new IOUtils().querySignImage(this,"/storage/emulated/0/Download/Q/1.gif");
+        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOCUMENTS+"/Q";
+        //new IOUtils().querySignImage(this,"5-140FGZ248-53.gif");
+        ContentResolver resolver = getContentResolver();
+        Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 95);
+        try {
+            ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "r");
+            //FileOutputStream outputStream = new FileOutputStream(parcelFd.getFileDescriptor());
+            Drawable d=Drawable.createFromStream(resolver.openInputStream(contentUri),null);
+            Glide.with(MainActivity.this)
+                                        .asDrawable()
+                                        .load(d)
+                                        .into(image);
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        //resolver.openFileDescriptor();
+
+        //new IOUtils().getFileOutputStream(this,dir,"uuid");
+        new IOUtils().querySignImage(this,"uuid");
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
@@ -73,7 +104,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                         });
                 break;
             case R.id.delete:
-                if (new IOUtils().delete(MainActivity.this,dir+"/5-140FGZ248-53.gif")){
+                if (new IOUtils().delete(MainActivity.this,dir+"/uuid")){
                     Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
                     Log.e("liyuhao","删除成功");
                 }else {
