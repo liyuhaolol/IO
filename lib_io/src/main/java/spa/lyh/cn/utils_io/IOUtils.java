@@ -48,6 +48,7 @@ public class IOUtils {
         mimeTypeList.put(".xls","application/vnd.ms-excel");
         mimeTypeList.put(".xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         mimeTypeList.put(".exe","application/octet-stream");
+        mimeTypeList.put(".flac","audio/quicktime");
         mimeTypeList.put(".flv","video/x-flv");
         mimeTypeList.put(".gif","image/gif");
         mimeTypeList.put(".gtar","application/x-gtar");
@@ -214,6 +215,7 @@ public class IOUtils {
                         String relativePath = dirPath.replace(storagePath+"/","") + "/";
                         String params[] = new String[] {displayName,relativePath};
                         int yes = resolver.delete(external,MediaStore.Downloads.DISPLAY_NAME + " = ? and "+MediaStore.Downloads.RELATIVE_PATH+ " = ?",params);
+
                         Log.e("liyuhao",""+yes);
                         if (yes > 0){
                             return true;
@@ -552,7 +554,7 @@ public class IOUtils {
             String queryPathKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? MediaStore.Images.Media.DISPLAY_NAME : MediaStore.Images.Media.DATA;
             //查询的条件语句
             //String selection = queryPathKey + " = ?";
-            String selection = queryPathKey + " = ?";
+            String selection = queryPathKey + " = ? and relative_path = ?";
             //查询的sql
             //Uri：指向外部存储Uri
             //projection：查询那些结果
@@ -571,9 +573,10 @@ public class IOUtils {
                                     MediaStore.Images.Media.DATA,
                                     MediaStore.Images.Media.MIME_TYPE,
                                     MediaStore.Images.Media.DISPLAY_NAME,
-                                    MediaStore.Images.Media.TITLE},
+                                    MediaStore.Images.Media.TITLE,
+                                    MediaStore.Images.Media.RELATIVE_PATH},
                             selection,
-                    new String[]{filePath},
+                    new String[]{filePath,"Documents/Q/"},
                     null);
 
             //是否查询到了
@@ -587,16 +590,19 @@ public class IOUtils {
                     String name = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));//图片名字
                     //String count = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._COUNT));//图片名字
                     String title = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE));//图片名字
-                    Log.e("liyuhao","id:"+id);
+                    String relative = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH));//图片名字
+                    String a = "id:"+id+"\npath:"+path+"\ntype:"+type+"\nname:"+name+"\ntitle:"+title+"\nrelativepath:"+relative;
+                    /*Log.e("liyuhao","id:"+id);
                     Log.e("liyuhao","path:"+path);
                     Log.e("liyuhao","type:"+type);
                     Log.e("liyuhao","name:"+name);
                     //Log.e("liyuhao","count:"+count);
-                    Log.e("liyuhao","title:"+title);
+                    Log.e("liyuhao","title:"+title);*/
+                    Log.e("liyuhao",a);
                     //根据图片id获取uri，这里的操作是拼接uri
                     //Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
                     //官方代码：
-                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                    /*Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
                     if (contentUri != null) {
                         Log.e("liyuhao","得到uri");
                         ParcelFileDescriptor parcelFd = context.getContentResolver().openFileDescriptor(contentUri, "r");
@@ -608,7 +614,7 @@ public class IOUtils {
                             // close(2) on the file descriptor when you're done using it.
                         }
 
-                    }
+                    }*/
                 } while (cursor.moveToNext());
             }
             if (cursor != null)

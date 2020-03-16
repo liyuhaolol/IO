@@ -21,8 +21,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
 
 import okhttp3.Call;
 import spa.lyh.cn.lib_https.CommonOkHttpClient;
@@ -34,7 +36,7 @@ import spa.lyh.cn.utils_io.IOUtils;
 
 public class MainActivity extends PermissionActivity implements View.OnClickListener {
     private Button download,delete;
-    private String dir;
+    private String dir,fileName;
     private ImageView image;
 
     @Override
@@ -48,8 +50,9 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         delete.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOCUMENTS+"/Q";
+        fileName = "uuid.txt";
         //new IOUtils().querySignImage(this,"5-140FGZ248-53.gif");
-        ContentResolver resolver = getContentResolver();
+        /*ContentResolver resolver = getContentResolver();
         Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 95);
         try {
             ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "r");
@@ -62,11 +65,17 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
         }catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
         //resolver.openFileDescriptor();
 
-        //new IOUtils().getFileOutputStream(this,dir,"uuid");
-        new IOUtils().querySignImage(this,"uuid");
+       /*FileOutputStream ss = new IOUtils().getFileOutputStream(this,dir,"uuid.txt");
+       try {
+           ss.flush();
+           ss.close();
+       }catch (Exception e){
+           e.printStackTrace();
+       }*/
+        //new IOUtils().querySignImage(this,"uuid.txt");
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
@@ -82,7 +91,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
 
 
-                downloadFile(MainActivity.this,
+                /*downloadFile(MainActivity.this,
                         "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
                         dir,
                         new DisposeDownloadListener() {
@@ -101,10 +110,21 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                             public void onProgress(boolean haveFileSize, int progress, String currentSize, String sumSize) {
 
                             }
-                        });
+                        });*/
+                FileOutputStream ss = new IOUtils().getFileOutputStream(this,dir,fileName);
+                try {
+                   BufferedWriter out = new BufferedWriter(new OutputStreamWriter(ss));
+                   out.write("你好");
+                   ss.flush();
+                   ss.close();
+                   out.flush();
+                   out.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
             case R.id.delete:
-                if (new IOUtils().delete(MainActivity.this,dir+"/uuid")){
+                if (new IOUtils().delete(MainActivity.this,dir+"/"+fileName)){
                     Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
                     Log.e("liyuhao","删除成功");
                 }else {
