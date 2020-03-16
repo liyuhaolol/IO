@@ -26,5 +26,5 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     api 'com.squareup.okhttp3:okhttp:4.2.2'
     implementation 'com.alibaba:fastjson:1.2.62'
-    implementation project(':utils_io')
+    implementation project(':lib_io')
 }
