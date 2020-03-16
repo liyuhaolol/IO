@@ -537,6 +537,7 @@ public class IOUtils {
     private String getBehind(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String behind;
+
         //不要判断其他情况在这个位置
         if (spot != -1){
             //点在中间
