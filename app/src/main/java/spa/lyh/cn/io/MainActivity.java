@@ -22,9 +22,11 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.BufferedWriter;
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 
 import okhttp3.Call;
 import spa.lyh.cn.lib_https.CommonOkHttpClient;
@@ -49,13 +51,13 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         delete = findViewById(R.id.delete);
         delete.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOCUMENTS+"/Q";
+        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
         fileName = "uuid.txt";
         //new IOUtils().querySignImage(this,"5-140FGZ248-53.gif");
-        /*ContentResolver resolver = getContentResolver();
-        Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 95);
+        ContentResolver resolver = getContentResolver();
+       Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 136);
         try {
-            ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "r");
+            ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "rw");
             //FileOutputStream outputStream = new FileOutputStream(parcelFd.getFileDescriptor());
             Drawable d=Drawable.createFromStream(resolver.openInputStream(contentUri),null);
             Glide.with(MainActivity.this)
@@ -65,16 +67,20 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
         }catch (Exception e){
             e.printStackTrace();
-        }*/
+        }
         //resolver.openFileDescriptor();
-
-       /*FileOutputStream ss = new IOUtils().getFileOutputStream(this,dir,"uuid.txt");
+        Uri contentUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, 136);
        try {
+           ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "rw");
+           FileOutputStream ss = new FileOutputStream(parcelFd.getFileDescriptor());
+           PrintWriter out = new PrintWriter(ss);
+           out.write("你好么！");
+           out.flush();
            ss.flush();
            ss.close();
        }catch (Exception e){
            e.printStackTrace();
-       }*/
+       }
         //new IOUtils().querySignImage(this,"uuid.txt");
     }
     //getExternalCacheDir().getPath()+ "/Q"
@@ -111,12 +117,14 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
                             }
                         });*/
-                FileOutputStream ss = new IOUtils().getFileOutputStream(this,dir,fileName);
+                //FileOutputStream ss = new IOUtils().getFileOutputStream(this,dir,fileName);
+                FileDescriptor descriptor = new IOUtils().createFileDescriptor(this,dir,fileName);
+                if (descriptor == null){
+                    Log.e("liyuhao","空");
+                }
                 try {
-                   BufferedWriter out = new BufferedWriter(new OutputStreamWriter(ss));
+                   BufferedWriter out = new BufferedWriter(new FileWriter(descriptor));
                    out.write("你好");
-                   ss.flush();
-                   ss.close();
                    out.flush();
                    out.close();
                 } catch (Exception e) {

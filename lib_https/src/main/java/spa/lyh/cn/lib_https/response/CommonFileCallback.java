@@ -151,7 +151,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
         try {
 
             inputStream  = response.body().byteStream();//输入流
-            fos  = utils.getFileOutputStream(context,mFilePath,filename);
+            fos  = utils.createFileOutputStream(context,mFilePath,filename);
             if (fos == null){
                 mDeliveryHandler.obtainMessage(FAILURE_MESSAGE, new OkHttpException(OkHttpException.OTHER_ERROR, EMPTY_RESPONSE)).sendToTarget();
                 return;

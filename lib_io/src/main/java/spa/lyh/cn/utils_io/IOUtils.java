@@ -14,6 +14,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -22,6 +23,10 @@ import java.util.List;
 
 public class IOUtils {
     private static String android = "/Android";//内部路径
+
+    private final static int STORAGE_LEGACY = 1;
+    private final static int STORAGE_NEW = 2;
+    private final static int WRONG_PATH = 0;
 
     private String mainPath;
     private String fileName;
@@ -105,7 +110,122 @@ public class IOUtils {
     }
 
 
-    public FileOutputStream getFileOutputStream(Context context,String dirPath, String fileName){
+
+    //public Uri createFileUri(Context context,String dirPath, String fileName){ }
+
+    public FileDescriptor createFileDescriptor(Context context,String dirPath, String fileName){
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
+        String lowFileName = getLowSuffixRightFileName(fileName);
+        if (dirPath.startsWith("/sdcard")){
+            //非标准写法,转换为标准写法
+            mainPath = storagePath + dirPath.substring(7);
+
+        }else {
+            mainPath = dirPath;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            //Log.e("liyuhao","Android10以上");
+            //Android10以上
+            if (verifyStoragePath(mainPath)){
+                //路径是起步正确的
+                //Environment.DIRECTORY_SCREENSHOTS
+                if (mainPath.startsWith(storagePath+android)){
+                    //Log.e("liyuhao","私有存储空间");
+                    //进入私有存储空间
+                    return null;
+                }else {
+                    //进入公有存储空间
+                    //Log.e("liyuhao","公有存储空间");
+                    String mimeType = getMimeType(lowFileName);
+                    ContentValues values = new ContentValues();
+                    //这里用download，其实用谁都无所谓，只是一个string
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
+                    values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
+                    values.put(MediaStore.Downloads.RELATIVE_PATH,
+                            mainPath.substring(storagePath.length()+1));//公共目录下目录名
+                    Uri external = getUri(mainPath,mimeType);
+                    if (external == null){
+                        return null;
+                    }
+                    ContentResolver resolver = context.getContentResolver();
+
+                    Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
+                    if (insertUri != null) {
+                        Log.e("liyuhao",insertUri.getPath());
+                        this.mainPath = getRealFilePath(context,insertUri);
+                        this.fileName = getName(mainPath);
+                        try{
+                            return resolver.openFileDescriptor(insertUri,"rw").getFileDescriptor();
+                        }catch (FileNotFoundException e){
+                            e.printStackTrace();
+                            return null;
+                        }
+
+                    }else {
+                        return null;
+                    }
+                }
+            }else {
+                return null;
+            }
+        }else {
+            //Android9以下
+            //Log.e("liyuhao","Android9以下");
+            if (verifyStoragePath(mainPath)){
+                //路径是起步正确的
+                return null;
+            }else{
+                //路径不正确
+                return null;
+            }
+        }
+    }
+
+    /**
+     * 尽量使用这个方法检查
+     * @return
+     */
+    private int checkPublicStorage(String dirPath, String fileName){
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
+        String lowFileName = getLowSuffixRightFileName(fileName);
+        if (dirPath.startsWith("/sdcard")){
+            //非标准写法,转换为标准写法
+            mainPath = storagePath + dirPath.substring(7);
+
+        }else {
+            mainPath = dirPath;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            //Log.e("liyuhao","Android10以上");
+            //Android10以上
+            if (verifyStoragePath(mainPath)){
+                //路径是起步正确的
+                //Environment.DIRECTORY_SCREENSHOTS
+                if (mainPath.startsWith(storagePath+android)){
+                    //Log.e("liyuhao","私有存储空间");
+                    //进入私有存储空间
+                    return STORAGE_LEGACY;
+                }else {
+                    //进入公有存储空间
+                    //Log.e("liyuhao","公有存储空间");
+                    return STORAGE_NEW;
+                }
+            }else {
+                return WRONG_PATH;
+            }
+        }else {
+            //Android9以下
+            if (verifyStoragePath(mainPath)){
+                //路径是起步正确的
+                return STORAGE_LEGACY;
+            }else{
+                //路径不正确
+                return WRONG_PATH;
+            }
+        }
+    }
+    public FileOutputStream createFileOutputStream(Context context,String dirPath, String fileName){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         String lowFileName = getLowSuffixRightFileName(fileName);
         if (dirPath.startsWith("/sdcard")){

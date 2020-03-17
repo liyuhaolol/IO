@@ -26,4 +26,5 @@ dependencies {
     implementation project(':lib_io')
     implementation project(':lib_https')
     implementation 'com.github.bumptech.glide:glide:4.10.0'
+    //implementation 'spa.lyh.cn:lib_https:1.0.2'
 }
