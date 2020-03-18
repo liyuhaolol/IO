@@ -21,10 +21,12 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
@@ -55,7 +57,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         fileName = "uuid.txt";
         //new IOUtils().querySignImage(this,"5-140FGZ248-53.gif");
         ContentResolver resolver = getContentResolver();
-       Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 136);
+       /*Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 136);
         try {
             ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "rw");
             //FileOutputStream outputStream = new FileOutputStream(parcelFd.getFileDescriptor());
@@ -67,10 +69,10 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
         }catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
         //resolver.openFileDescriptor();
-        Uri contentUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, 136);
-       try {
+        Uri contentUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, 49);
+       /*try {
            ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "rw");
            FileOutputStream ss = new FileOutputStream(parcelFd.getFileDescriptor());
            PrintWriter out = new PrintWriter(ss);
@@ -78,6 +80,16 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
            out.flush();
            ss.flush();
            ss.close();
+       }catch (Exception e){
+           e.printStackTrace();
+       }*/
+       try {
+           BufferedReader br = new BufferedReader(new InputStreamReader(resolver.openInputStream(contentUri)));
+           String lineTxt = br.readLine();
+           if (lineTxt != null){
+               Log.e("liyuhao","内容为："+lineTxt);
+           }
+           br.close();
        }catch (Exception e){
            e.printStackTrace();
        }
@@ -117,13 +129,8 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
                             }
                         });*/
-                //FileOutputStream ss = new IOUtils().getFileOutputStream(this,dir,fileName);
-                FileDescriptor descriptor = new IOUtils().createFileDescriptor(this,dir,fileName);
-                if (descriptor == null){
-                    Log.e("liyuhao","空");
-                }
                 try {
-                   BufferedWriter out = new BufferedWriter(new FileWriter(descriptor));
+                   BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new IOUtils().createFileOutputStream(this,dir,fileName)));
                    out.write("你好");
                    out.flush();
                    out.close();
