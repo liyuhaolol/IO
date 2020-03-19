@@ -23,6 +23,7 @@ import spa.lyh.cn.lib_https.model.Progress;
 import spa.lyh.cn.lib_https.model.Success;
 import spa.lyh.cn.lib_https.response.base.CommonBase;
 import spa.lyh.cn.utils_io.IOUtils;
+import spa.lyh.cn.utils_io.model.FileData;
 
 
 /**
@@ -52,8 +53,6 @@ public class CommonFileCallback extends CommonBase implements Callback {
     private DisposeDownloadListener mListener;
     private String mFilePath;
     private boolean devMode;
-
-    private IOUtils utils;
 
     private Context context;
 
@@ -132,7 +131,6 @@ public class CommonFileCallback extends CommonBase implements Callback {
 
 ////////////////////////////
 
-        utils = new IOUtils();
         int length;//每一块的长度
         byte[] buffer = new byte[2048];//每一段的长度
         InputStream inputStream = null;
@@ -140,6 +138,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
         //String filePath = mFilePath+"/"+filename;
         //File file = new File(filePath);
         FileOutputStream fos = null;
+        FileData data;
 
 
         int currentLength = 0;//当前已经下载的大小
@@ -151,12 +150,12 @@ public class CommonFileCallback extends CommonBase implements Callback {
         try {
 
             inputStream  = response.body().byteStream();//输入流
-            fos  = utils.createFileOutputStream(context,mFilePath,filename);
-            if (fos == null){
+            data  = IOUtils.createFileOutputStream(context,mFilePath,filename);
+            if (data == null || data.getFos() == null){
                 mDeliveryHandler.obtainMessage(FAILURE_MESSAGE, new OkHttpException(OkHttpException.OTHER_ERROR, EMPTY_RESPONSE)).sendToTarget();
                 return;
             }
-
+            fos = data.getFos();
             sumLength = response.body().contentLength();//文件总大小
 
 
@@ -224,7 +223,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
                 e.printStackTrace();
             }
         }
-        Success success = new Success(utils.getFilePath(),utils.getFileName());
+        Success success = new Success(data.getFilePath(),data.getFileName());
         mDeliveryHandler.sendMessageDelayed(mDeliveryHandler.obtainMessage(SUCCESS_MESSAGE,success),50);
     }
 

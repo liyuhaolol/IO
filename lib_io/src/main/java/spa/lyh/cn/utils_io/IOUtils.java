@@ -18,7 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import spa.lyh.cn.utils_io.listener.FileResultListener;
+import spa.lyh.cn.utils_io.model.FileData;
+
 
 public class IOUtils {
     private static String android = "/Android";//内部路径
@@ -27,11 +28,11 @@ public class IOUtils {
     private final static int STORAGE_NEW = 2;
     private final static int WRONG_PATH = 0;
 
-    private String mainPath;
-    private String fileName;
+    /*private String mainPath;
+    private String fileName;*/
     private static final String DEAFULT_FILE_NAME = "deafult";
 
-    private List<String> list;
+    private static List<String> list;
 
     private static HashMap<String,String> mimeTypeList;
 
@@ -116,7 +117,7 @@ public class IOUtils {
      * 尽量使用这个方法检查
      * @return
      */
-    private int checkPublicStorage(String dirPath, String fileName){
+    /*private int checkPublicStorage(String dirPath, String fileName){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         String lowFileName = getLowSuffixRightFileName(fileName);
         if (dirPath.startsWith("/sdcard")){
@@ -155,10 +156,11 @@ public class IOUtils {
                 return WRONG_PATH;
             }
         }
-    }
-    public FileOutputStream createFileOutputStream(Context context, String dirPath, String fileName, FileResultListener listener){
+    }*/
+    public static FileData createFileOutputStream(Context context, String dirPath, String fileName){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         String lowFileName = getLowSuffixRightFileName(fileName);
+        String mainPath;
         if (dirPath.startsWith("/sdcard")){
             //非标准写法,转换为标准写法
             mainPath = storagePath + dirPath.substring(7);
@@ -175,12 +177,7 @@ public class IOUtils {
                 if (mainPath.startsWith(storagePath+android)){
                     //Log.e("liyuhao","私有存储空间");
                     //进入私有存储空间
-                    try{
-                        return new FileOutputStream(ioUnder9(mainPath,lowFileName));
-                    }catch (FileNotFoundException e){
-                        e.printStackTrace();
-                        return null;
-                    }
+                    return ioUnder9(mainPath,lowFileName);
                 }else {
                     //进入公有存储空间
                     //Log.e("liyuhao","公有存储空间");
@@ -199,10 +196,12 @@ public class IOUtils {
 
                     Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
                     if (insertUri != null) {
-                        this.mainPath = getRealFilePath(context,insertUri);
-                        this.fileName = getName(mainPath);
+                        FileData data = new FileData();
+                        data.setFilePath(getRealFilePath(context,insertUri));
+                        data.setFileName(getName(data.getFilePath()));
                         try{
-                            return (FileOutputStream) resolver.openOutputStream(insertUri);
+                            data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
+                            return data;
                         }catch (FileNotFoundException e){
                             e.printStackTrace();
                             return null;
@@ -220,12 +219,7 @@ public class IOUtils {
             //Log.e("liyuhao","Android9以下");
             if (verifyStoragePath(mainPath)){
                 //路径是起步正确的
-                try{
-                    return new FileOutputStream(ioUnder9(mainPath,lowFileName));
-                }catch (FileNotFoundException e){
-                    e.printStackTrace();
-                    return null;
-                }
+                return ioUnder9(mainPath,lowFileName);
             }else{
                 //路径不正确
                 return null;
@@ -234,7 +228,7 @@ public class IOUtils {
     }
 
 
-    public boolean delete(Context context,String filePath){
+    public static boolean delete(Context context,String filePath){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         String tempPath;
         if (filePath.startsWith("/sdcard")){
@@ -295,7 +289,7 @@ public class IOUtils {
     }
 
     @TargetApi(29)
-    private Uri getUri(String path,String mimeType){
+    private static Uri getUri(String path,String mimeType){
         String pubPath = Environment.getExternalStorageDirectory().getPath();
         if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOWNLOADS)){
             return MediaStore.Downloads.EXTERNAL_CONTENT_URI;
@@ -325,7 +319,7 @@ public class IOUtils {
         return null;
     }
 
-    private String getMimeType(String fileName){
+    private static String getMimeType(String fileName){
         String behind;
         int  spot = fileName.lastIndexOf(".");
         if (spot == 0){
@@ -356,7 +350,7 @@ public class IOUtils {
         return mimeType;
     }
 
-    private String syncFileName(String contnet,boolean isSuffix){
+    private static String syncFileName(String contnet,boolean isSuffix){
         //取得内容
         String syncContent = contnet;
         //判空,因为name有初值，所以这里判断是否存在后缀，没有就没有
@@ -400,16 +394,22 @@ public class IOUtils {
 
     }
 
-    private File ioUnder9(String dirPath,String fileName){
+    private static FileData ioUnder9(String dirPath,String fileName){
         checkLocalFilePath(dirPath);
         //这里按道理，用10的标准，要做文件查重，先暂时搁置
-        this.fileName = createFileName(dirPath,fileName);
-        this.mainPath = dirPath+"/"+this.fileName;
-        return new File(mainPath);
-
+        FileData data = new FileData();
+        data.setFileName(createFileName(dirPath,fileName));
+        data.setFilePath(dirPath+"/"+data.getFileName());
+        try {
+            data.setFos(new FileOutputStream(new File(data.getFilePath())));
+            return data;
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    private String createFileName(String dirPath,String fileName){
+    private static String createFileName(String dirPath,String fileName){
         if (list == null){
             list = new ArrayList<>();
         }else {
@@ -430,7 +430,7 @@ public class IOUtils {
         return returnName(fileName,0);
     }
 
-    private String returnName(String fileName,int index){
+    private static String returnName(String fileName,int index){
         //Log.e("liyuhao","开始遍历");
         int mIndex = index;
         String front;
@@ -463,21 +463,6 @@ public class IOUtils {
         }
     }
 
-    public String getFilePath(){
-        if (mainPath != null){
-            return mainPath;
-        }else {
-            return "";
-        }
-    }
-
-    public String getFileName(){
-        if (fileName != null){
-            return fileName;
-        }else {
-            return "";
-        }
-    }
     /**
      * 检查路径是否起码合法
      * @param path
@@ -506,7 +491,7 @@ public class IOUtils {
      * @param uri
      * @return
      */
-    private String getRealFilePath(Context context,Uri uri ) {
+    private static String getRealFilePath(Context context,Uri uri ) {
         if ( null == uri ) return null;
         final String scheme = uri.getScheme();
         String data = null;
@@ -534,12 +519,12 @@ public class IOUtils {
      * @param filePath
      * @return
      */
-    private String getName(String filePath){
+    private static String getName(String filePath){
         String[] strArr = filePath.split("/");
         return strArr[strArr.length-1];
     }
 
-    private String getLowSuffixRightFileName(String fileName){
+    private static String getLowSuffixRightFileName(String fileName){
         String front;
         String behind = "";
         int  spot = fileName.lastIndexOf(".");
@@ -571,7 +556,7 @@ public class IOUtils {
         return front+behind;
     }
 
-    private String getFront(String fileName){
+    private static String getFront(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String front;
         //不要判断其他情况在这个位置
@@ -585,7 +570,7 @@ public class IOUtils {
         return front;
     }
 
-    private String getBehind(String fileName){
+    private static String getBehind(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String behind;
 
@@ -600,7 +585,7 @@ public class IOUtils {
         return behind;
     }
 
-    public void querySignImage(Context context,String filePath) {
+    public static void queryFile(Context context,String filePath) {
         try {
             //兼容androidQ和以下版本
             String queryPathKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? MediaStore.Images.Media.DISPLAY_NAME : MediaStore.Images.Media.DATA;

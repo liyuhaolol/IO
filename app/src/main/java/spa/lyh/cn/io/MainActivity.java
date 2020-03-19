@@ -23,6 +23,7 @@ import com.bumptech.glide.Glide;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -39,7 +40,7 @@ import spa.lyh.cn.lib_https.request.RequestParams;
 import spa.lyh.cn.utils_io.IOUtils;
 
 public class MainActivity extends PermissionActivity implements View.OnClickListener {
-    private Button download,delete;
+    private Button download,delete,insert;
     private String dir,fileName;
     private ImageView image;
 
@@ -52,10 +53,16 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         download.setOnClickListener(this);
         delete = findViewById(R.id.delete);
         delete.setOnClickListener(this);
+        insert = findViewById(R.id.insert);
+        insert.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
         fileName = "uuid.txt";
         //new IOUtils().querySignImage(this,"5-140FGZ248-53.gif");
+        File file = new File(dir+"/"+fileName);
+        if (file.exists()){
+            Log.e("liyuhao","存在uuid.txt");
+        }
         ContentResolver resolver = getContentResolver();
        /*Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, 136);
         try {
@@ -71,7 +78,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
             e.printStackTrace();
         }*/
         //resolver.openFileDescriptor();
-        Uri contentUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, 49);
+        //Uri contentUri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, 49);
        /*try {
            ParcelFileDescriptor parcelFd = resolver.openFileDescriptor(contentUri, "rw");
            FileOutputStream ss = new FileOutputStream(parcelFd.getFileDescriptor());
@@ -83,7 +90,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
        }catch (Exception e){
            e.printStackTrace();
        }*/
-       try {
+       /*try {
            BufferedReader br = new BufferedReader(new InputStreamReader(resolver.openInputStream(contentUri)));
            String lineTxt = br.readLine();
            if (lineTxt != null){
@@ -92,7 +99,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
            br.close();
        }catch (Exception e){
            e.printStackTrace();
-       }
+       }*/
         //new IOUtils().querySignImage(this,"uuid.txt");
     }
     //getExternalCacheDir().getPath()+ "/Q"
@@ -109,7 +116,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
 
 
-                /*downloadFile(MainActivity.this,
+                downloadFile(MainActivity.this,
                         "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
                         dir,
                         new DisposeDownloadListener() {
@@ -128,18 +135,20 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                             public void onProgress(boolean haveFileSize, int progress, String currentSize, String sumSize) {
 
                             }
-                        });*/
+                        });
+                break;
+            case R.id.insert:
                 try {
-                   BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new IOUtils().createFileOutputStream(this,dir,fileName)));
-                   out.write("你好");
-                   out.flush();
-                   out.close();
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(IOUtils.createFileOutputStream(this,dir,fileName).getFos()));
+                    out.write("你好");
+                    out.flush();
+                    out.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
             case R.id.delete:
-                if (new IOUtils().delete(MainActivity.this,dir+"/"+fileName)){
+                if (IOUtils.delete(MainActivity.this,dir+"/"+fileName)){
                     Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
                     Log.e("liyuhao","删除成功");
                 }else {
