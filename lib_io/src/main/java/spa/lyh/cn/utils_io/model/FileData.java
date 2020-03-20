@@ -3,6 +3,7 @@ package spa.lyh.cn.utils_io.model;
 import java.io.FileOutputStream;
 
 public class FileData {
+    //所有位置的参数，理论上都可能为空
     private FileOutputStream fos;
     private String fileName;
     private String filePath;

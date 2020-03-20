@@ -2,6 +2,7 @@ package spa.lyh.cn.utils_io;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,6 +13,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import spa.lyh.cn.utils_io.model.FileData;
+import spa.lyh.cn.utils_io.model.FileDetail;
 
 
 public class IOUtils {
@@ -110,53 +113,104 @@ public class IOUtils {
     }
 
 
-
-    //public Uri createFileUri(Context context,String dirPath, String fileName){ }
-
-    /**
-     * 尽量使用这个方法检查
-     * @return
-     */
-    /*private int checkPublicStorage(String dirPath, String fileName){
-        String storagePath = Environment.getExternalStorageDirectory().getPath();
-        String lowFileName = getLowSuffixRightFileName(fileName);
-        if (dirPath.startsWith("/sdcard")){
-            //非标准写法,转换为标准写法
-            mainPath = storagePath + dirPath.substring(7);
-
-        }else {
-            mainPath = dirPath;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            //Log.e("liyuhao","Android10以上");
-            //Android10以上
-            if (verifyStoragePath(mainPath)){
-                //路径是起步正确的
-                //Environment.DIRECTORY_SCREENSHOTS
-                if (mainPath.startsWith(storagePath+android)){
-                    //Log.e("liyuhao","私有存储空间");
-                    //进入私有存储空间
-                    return STORAGE_LEGACY;
+    public static Uri getFileUri(Context context, String filePath){
+        //实际测试，不管有没有权限，file.exists方法都可以使用
+        File file = new File(filePath);
+        if (file.exists()){
+            //文件物理存在
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                FileDetail detail = queryFile(context,filePath);
+                if (detail != null){
+                    Uri contentUri = getUri(filePath,getMimeType(getFileName(filePath)));
+                    if (contentUri != null){
+                        return ContentUris.withAppendedId(contentUri, detail.getId());
+                    }else {
+                        return null;
+                    }
                 }else {
-                    //进入公有存储空间
-                    //Log.e("liyuhao","公有存储空间");
-                    return STORAGE_NEW;
+                    return null;
                 }
             }else {
-                return WRONG_PATH;
+                return Uri.fromFile(file);
             }
         }else {
-            //Android9以下
-            if (verifyStoragePath(mainPath)){
-                //路径是起步正确的
-                return STORAGE_LEGACY;
-            }else{
-                //路径不正确
-                return WRONG_PATH;
-            }
+            return null;
         }
-    }*/
+    }
+
+    public static FileInputStream getFileInputStream(Context context, String filePath){
+        //实际测试，不管有没有权限，file.exists方法都可以使用
+        File file = new File(filePath);
+        if (file.exists()){
+            //文件物理存在
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                FileDetail detail = queryFile(context,filePath);
+                if (detail != null){
+                    Uri contentUri = getUri(filePath,getMimeType(getFileName(filePath)));
+                    if (contentUri != null){
+                        Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
+                        try{
+                            return (FileInputStream) context.getContentResolver().openInputStream(fileUri);
+                        }catch (FileNotFoundException e){
+                            e.printStackTrace();
+                            return null;
+                        }
+                    }else {
+                        return null;
+                    }
+                }else {
+                    return null;
+                }
+            }else {
+                try{
+                    return new FileInputStream(file);
+                }catch (FileNotFoundException e){
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        }else {
+            return null;
+        }
+    }
+
+    public static FileOutputStream getFileOutputStream(Context context, String filePath){
+        //实际测试，不管有没有权限，file.exists方法都可以使用
+        File file = new File(filePath);
+        if (file.exists()){
+            //文件物理存在
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                FileDetail detail = queryFile(context,filePath);
+                if (detail != null){
+                    Uri contentUri = getUri(filePath,getMimeType(getFileName(filePath)));
+                    if (contentUri != null){
+                        Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
+                        try{
+                            return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
+                        }catch (FileNotFoundException e){
+                            e.printStackTrace();
+                            return null;
+                        }
+                    }else {
+                        return null;
+                    }
+                }else {
+                    return null;
+                }
+            }else {
+                try {
+                    return new FileOutputStream(file);
+                }catch (FileNotFoundException e){
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        }else {
+            return null;
+        }
+    }
+
+
     public static FileData createFileOutputStream(Context context, String dirPath, String fileName){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         String lowFileName = getLowSuffixRightFileName(fileName);
@@ -198,7 +252,7 @@ public class IOUtils {
                     if (insertUri != null) {
                         FileData data = new FileData();
                         data.setFilePath(getRealFilePath(context,insertUri));
-                        data.setFileName(getName(data.getFilePath()));
+                        data.setFileName(getFileName(data.getFilePath()));
                         try{
                             data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
                             return data;
@@ -519,7 +573,7 @@ public class IOUtils {
      * @param filePath
      * @return
      */
-    private static String getName(String filePath){
+    private static String getFileName(String filePath){
         String[] strArr = filePath.split("/");
         return strArr[strArr.length-1];
     }
@@ -585,79 +639,68 @@ public class IOUtils {
         return behind;
     }
 
-    public static void queryFile(Context context,String filePath) {
+    @TargetApi(29)
+    public static FileDetail queryFile(Context context, String filePath) {
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
+        String fileName = getFileName(filePath);
+        String lowFileName = getLowSuffixRightFileName(fileName);
+        String mainPath;
+        FileDetail detail = null;
+        if (filePath.startsWith("/sdcard")){
+            //非标准写法,转换为标准写法
+            mainPath = filePath.substring(8).replace(fileName,"");
+
+        }else {
+            mainPath = filePath.replace(storagePath+"/","").replace(fileName,"");
+        }
         try {
             //兼容androidQ和以下版本
-            String queryPathKey = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ? MediaStore.Images.Media.DISPLAY_NAME : MediaStore.Images.Media.DATA;
+            String displayKey = MediaStore.Images.Media.DISPLAY_NAME;
+            String pathKey = MediaStore.Images.Media.RELATIVE_PATH;
             //查询的条件语句
-            //String selection = queryPathKey + " = ?";
-            String selection = queryPathKey + " = ? and relative_path = ?";
+            String selection = displayKey + " = ? and "+pathKey + " = ?";
             //查询的sql
             //Uri：指向外部存储Uri
             //projection：查询那些结果
             //selection：查询的where条件
             //sortOrder：排序
-            //.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-            /*new String[]{MediaStore.Images.Media._ID,
-                    MediaStore.Images.Media.DATA,
-                    MediaStore.Images.Media.MIME_TYPE,
-                    MediaStore.Images.Media.DISPLAY_NAME,
-                    MediaStore.Images.Media.TITLE}*/
-            Cursor cursor = context
-                    .getContentResolver()
-                    .query(MediaStore.Files.getContentUri("external"),
-                            new String[]{MediaStore.Images.Media._ID,
-                                    MediaStore.Images.Media.DATA,
-                                    MediaStore.Images.Media.MIME_TYPE,
-                                    MediaStore.Images.Media.DISPLAY_NAME,
-                                    MediaStore.Images.Media.TITLE,
-                                    MediaStore.Images.Media.RELATIVE_PATH},
-                            selection,
-                    new String[]{filePath,"Documents/Q/"},
-                    null);
+            Uri uri = getUri(filePath,getMimeType(lowFileName));
+            if (uri != null){
+                Cursor cursor = context
+                        .getContentResolver()
+                        .query(uri,
+                                new String[]{MediaStore.Images.Media._ID,
+                                        MediaStore.Images.Media.DATA,
+                                        MediaStore.Images.Media.MIME_TYPE,
+                                        MediaStore.Images.Media.DISPLAY_NAME,
+                                        MediaStore.Images.Media.TITLE,
+                                        MediaStore.Images.Media.RELATIVE_PATH},
+                                selection,
+                                new String[]{lowFileName,mainPath},
+                                null);
 
-            //是否查询到了
-            if (cursor != null && cursor.moveToFirst()) {
-                //循环取出所有查询到的数据
-                do {
-                    //一张图片的基本信息
-                    int id = cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID));//uri的id，用于获取图片
-                    String path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));//图片的相对路径
-                    String type = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE));//图片类型
-                    String name = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));//图片名字
-                    //String count = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._COUNT));//图片名字
-                    String title = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE));//图片名字
-                    String relative = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH));//图片名字
-                    String a = "id:"+id+"\npath:"+path+"\ntype:"+type+"\nname:"+name+"\ntitle:"+title+"\nrelativepath:"+relative;
-                    /*Log.e("liyuhao","id:"+id);
-                    Log.e("liyuhao","path:"+path);
-                    Log.e("liyuhao","type:"+type);
-                    Log.e("liyuhao","name:"+name);
-                    //Log.e("liyuhao","count:"+count);
-                    Log.e("liyuhao","title:"+title);*/
-                    Log.e("liyuhao",a);
-                    //根据图片id获取uri，这里的操作是拼接uri
-                    //Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "" + id);
-                    //官方代码：
-                    /*Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
-                    if (contentUri != null) {
-                        Log.e("liyuhao","得到uri");
-                        ParcelFileDescriptor parcelFd = context.getContentResolver().openFileDescriptor(contentUri, "r");
-                        if (parcelFd != null) {
-                            int fd = parcelFd.detachFd();
-                            Log.e("liyuhao","TTid:"+fd);
-
-                            // Pass the integer value "fd" into your native code. Remember to call
-                            // close(2) on the file descriptor when you're done using it.
-                        }
-
-                    }*/
-                } while (cursor.moveToNext());
+                //是否查询到了
+                if (cursor != null && cursor.moveToFirst()) {
+                    //循环取出所有查询到的数据
+                     detail = new FileDetail();
+                    do {
+                        //一张图片的基本信息
+                        detail.setId(cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID)));
+                        detail.setData(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)));
+                        detail.setMineType(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE)));
+                        detail.setDisplayName(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));
+                        detail.setTitle(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE)));
+                        detail.setRelativePath(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH)));
+                        //并不会有下一次，这个方法的逻辑指定到具体文件夹下的文件检索，不会出现复数文件
+                    } while (cursor.moveToNext());
+                }
+                if (cursor != null)
+                    cursor.close();
             }
-            if (cursor != null)
-                cursor.close();
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
+        return detail;
     }
 }

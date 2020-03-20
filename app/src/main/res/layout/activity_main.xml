@@ -7,6 +7,11 @@
         android:id="@+id/img"
         android:layout_width="50dp"
         android:layout_height="50dp"/>
+    <TextView
+        android:id="@+id/tv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/img"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -22,7 +27,13 @@
             android:id="@+id/insert"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="写入'测试文档1'"
+            android:text="创建文件写入'测试文档1'"
+            android:layout_marginTop="10dp"/>
+        <Button
+            android:id="@+id/insert2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="修改文件写入'测试文档2'"
             android:layout_marginTop="10dp"/>
         <Button
             android:id="@+id/delete"
