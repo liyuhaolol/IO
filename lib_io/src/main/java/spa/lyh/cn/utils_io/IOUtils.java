@@ -5,6 +5,8 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -25,6 +27,7 @@ import spa.lyh.cn.utils_io.model.FileDetail;
 
 
 public class IOUtils {
+    private static String TAG = "IOUtils";
     private static String android = "/Android";//内部路径
 
     private final static int STORAGE_LEGACY = 1;
@@ -306,18 +309,27 @@ public class IOUtils {
                     }
                 }else {
                     Uri external = getUri(dirPath,getMimeType(displayName));
-                    if (external == null){
-                        return false;
-                    }
                     ContentResolver resolver = context.getContentResolver();
                     if (external != null){
                         String relativePath = dirPath.replace(storagePath+"/","") + "/";
-                        String params[] = new String[] {displayName,relativePath};
-                        int yes = resolver.delete(external,MediaStore.Downloads.DISPLAY_NAME + " = ? and "+MediaStore.Downloads.RELATIVE_PATH+ " = ?",params);
-
-                        Log.e("liyuhao",""+yes);
+                        int yes = resolver.delete(
+                                external,
+                                MediaStore.Downloads.DISPLAY_NAME + " = ? and "+MediaStore.Downloads.RELATIVE_PATH+ " = ?",
+                                new String[] {displayName,relativePath});
                         if (yes > 0){
-                            return true;
+                            //有记录被删了
+                            file = new File(filePath);
+                            if (file.exists()){
+                                fileScan(context,filePath);
+                                if (isApkInDebug(context)){
+                                    Log.e(TAG,"目前通过实践发现Android10系统下的某些公共文件夹，无法按照代码预期进行文件移除。"
+                                    + "基本确认是Android10的BUG，Android11测试已将此问题修复。"
+                                    + "如果项目实际使用中碰到了这个问题,请避免使用这个文件夹。或者引导用户手动移除该文件。");
+                                }
+                                return false;
+                            }else {
+                                return true;
+                            }
                         }else {
                             return false;
                         }
@@ -654,7 +666,6 @@ public class IOUtils {
             mainPath = filePath.replace(storagePath+"/","").replace(fileName,"");
         }
         try {
-            //兼容androidQ和以下版本
             String displayKey = MediaStore.Images.Media.DISPLAY_NAME;
             String pathKey = MediaStore.Images.Media.RELATIVE_PATH;
             //查询的条件语句
@@ -701,6 +712,37 @@ public class IOUtils {
             e.printStackTrace();
             return null;
         }
-        return detail;
+        if (detail != null){
+            return detail;
+        }else {
+            File file = new File(filePath);
+            if (file.exists()){
+                //文件存在，但是未能检索到
+                fileScan(context,filePath);
+                return queryFile(context,filePath);
+            }else {
+                return null;
+            }
+        }
+    }
+
+    public static void fileScan(Context context,String filePath) {
+        File file = new File(filePath);
+        if (file.exists()){
+            Uri data = Uri.fromFile(new File(filePath));
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, data));
+        }
+    }
+
+    /**
+     * 判断当前应用是否是debug状态
+     */
+    private static boolean isApkInDebug(Context context) {
+        try {
+            ApplicationInfo info = context.getApplicationInfo();
+            return (info.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

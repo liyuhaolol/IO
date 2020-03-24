@@ -8,6 +8,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -64,7 +65,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         insert2 = findViewById(R.id.insert2);
         insert2.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOCUMENTS+"/Q";
         fileName = "uuid";
         File file = new File(dir+"/"+fileName);
         if (file.exists()){
