@@ -653,76 +653,85 @@ public class IOUtils {
 
     @TargetApi(29)
     public static FileDetail queryFile(Context context, String filePath) {
-        String storagePath = Environment.getExternalStorageDirectory().getPath();
-        String fileName = getFileName(filePath);
-        String lowFileName = getLowSuffixRightFileName(fileName);
-        String mainPath;
-        FileDetail detail = null;
-        if (filePath.startsWith("/sdcard")){
-            //非标准写法,转换为标准写法
-            mainPath = filePath.substring(8).replace(fileName,"");
+        return queryFile(context,filePath,1);
+    }
 
-        }else {
-            mainPath = filePath.replace(storagePath+"/","").replace(fileName,"");
-        }
-        try {
-            String displayKey = MediaStore.Images.Media.DISPLAY_NAME;
-            String pathKey = MediaStore.Images.Media.RELATIVE_PATH;
-            //查询的条件语句
-            String selection = displayKey + " = ? and "+pathKey + " = ?";
-            //查询的sql
-            //Uri：指向外部存储Uri
-            //projection：查询那些结果
-            //selection：查询的where条件
-            //sortOrder：排序
-            Uri uri = getUri(filePath,getMimeType(lowFileName));
-            if (uri != null){
-                Cursor cursor = context
-                        .getContentResolver()
-                        .query(uri,
-                                new String[]{MediaStore.Images.Media._ID,
-                                        MediaStore.Images.Media.DATA,
-                                        MediaStore.Images.Media.MIME_TYPE,
-                                        MediaStore.Images.Media.DISPLAY_NAME,
-                                        MediaStore.Images.Media.TITLE,
-                                        MediaStore.Images.Media.RELATIVE_PATH},
-                                selection,
-                                new String[]{lowFileName,mainPath},
-                                null);
+    @TargetApi(29)
+    private static FileDetail queryFile(Context context, String filePath,int times){
+        if (times <= 2){
+            String storagePath = Environment.getExternalStorageDirectory().getPath();
+            String fileName = getFileName(filePath);
+            String lowFileName = getLowSuffixRightFileName(fileName);
+            String mainPath;
+            FileDetail detail = null;
+            if (filePath.startsWith("/sdcard")){
+                //非标准写法,转换为标准写法
+                mainPath = filePath.substring(8).replace(fileName,"");
 
-                //是否查询到了
-                if (cursor != null && cursor.moveToFirst()) {
-                    //循环取出所有查询到的数据
-                     detail = new FileDetail();
-                    do {
-                        //一张图片的基本信息
-                        detail.setId(cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID)));
-                        detail.setData(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)));
-                        detail.setMineType(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE)));
-                        detail.setDisplayName(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));
-                        detail.setTitle(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE)));
-                        detail.setRelativePath(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH)));
-                        //并不会有下一次，这个方法的逻辑指定到具体文件夹下的文件检索，不会出现复数文件
-                    } while (cursor.moveToNext());
-                }
-                if (cursor != null)
-                    cursor.close();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-        if (detail != null){
-            return detail;
-        }else {
-            File file = new File(filePath);
-            if (file.exists()){
-                //文件存在，但是未能检索到
-                fileScan(context,filePath);
-                return queryFile(context,filePath);
             }else {
+                mainPath = filePath.replace(storagePath+"/","").replace(fileName,"");
+            }
+            try {
+                String displayKey = MediaStore.Images.Media.DISPLAY_NAME;
+                String pathKey = MediaStore.Images.Media.RELATIVE_PATH;
+                //查询的条件语句
+                String selection = displayKey + " = ? and "+pathKey + " = ?";
+                //查询的sql
+                //Uri：指向外部存储Uri
+                //projection：查询那些结果
+                //selection：查询的where条件
+                //sortOrder：排序
+                Uri uri = getUri(filePath,getMimeType(lowFileName));
+                if (uri != null){
+                    Cursor cursor = context
+                            .getContentResolver()
+                            .query(uri,
+                                    new String[]{MediaStore.Images.Media._ID,
+                                            MediaStore.Images.Media.DATA,
+                                            MediaStore.Images.Media.MIME_TYPE,
+                                            MediaStore.Images.Media.DISPLAY_NAME,
+                                            MediaStore.Images.Media.TITLE,
+                                            MediaStore.Images.Media.RELATIVE_PATH},
+                                    selection,
+                                    new String[]{lowFileName,mainPath},
+                                    null);
+
+                    //是否查询到了
+                    if (cursor != null && cursor.moveToFirst()) {
+                        //循环取出所有查询到的数据
+                        detail = new FileDetail();
+                        do {
+                            //一张图片的基本信息
+                            detail.setId(cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID)));
+                            detail.setData(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)));
+                            detail.setMineType(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE)));
+                            detail.setDisplayName(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));
+                            detail.setTitle(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE)));
+                            detail.setRelativePath(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH)));
+                            //并不会有下一次，这个方法的逻辑指定到具体文件夹下的文件检索，不会出现复数文件
+                        } while (cursor.moveToNext());
+                    }
+                    if (cursor != null)
+                        cursor.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
                 return null;
             }
+            if (detail != null){
+                return detail;
+            }else {
+                File file = new File(filePath);
+                if (file.exists()){
+                    //文件存在，但是未能检索到
+                    fileScan(context,filePath);
+                    return queryFile(context,filePath,times+1);
+                }else {
+                    return null;
+                }
+            }
+        }else {
+            return null;
         }
     }
 

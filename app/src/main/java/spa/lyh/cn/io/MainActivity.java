@@ -65,8 +65,10 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         insert2 = findViewById(R.id.insert2);
         insert2.setOnClickListener(this);
         hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOCUMENTS+"/Q";
-        fileName = "uuid";
+        //String id = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        //Log.e("liyuhao",id);
+        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+        fileName = "uuid.txt";
         File file = new File(dir+"/"+fileName);
         if (file.exists()){
             Log.e("liyuhao","存在uuid");
