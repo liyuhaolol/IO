@@ -30,12 +30,6 @@ public class IOUtils {
     private static String TAG = "IOUtils";
     private static String android = "/Android";//内部路径
 
-    private final static int STORAGE_LEGACY = 1;
-    private final static int STORAGE_NEW = 2;
-    private final static int WRONG_PATH = 0;
-
-    /*private String mainPath;
-    private String fileName;*/
     private static final String DEAFULT_FILE_NAME = "deafult";
 
     private static List<String> list;
@@ -358,7 +352,8 @@ public class IOUtils {
     private static Uri getUri(String path,String mimeType){
         String pubPath = Environment.getExternalStorageDirectory().getPath();
         if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOWNLOADS)){
-            return MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+            //return MediaStore.Downloads.EXTERNAL_CONTENT_URI;//官方api竟然不好使，你敢信，你敢信？
+            return MediaStore.Files.getContentUri("external");
         }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DCIM)){
             if (mimeType.startsWith("video")){
                 return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
