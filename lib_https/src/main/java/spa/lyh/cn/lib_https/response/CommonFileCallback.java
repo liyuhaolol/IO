@@ -2,6 +2,7 @@ package spa.lyh.cn.lib_https.response;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -56,11 +57,14 @@ public class CommonFileCallback extends CommonBase implements Callback {
 
     private Context context;
 
-    public CommonFileCallback(Context context,DisposeDataHandle handle) {
+    private int mod;
+
+    public CommonFileCallback(Context context,DisposeDataHandle handle,int mod) {
         this.mListener = handle.downloadListener;
         this.mFilePath = handle.mSource;
         this.devMode = handle.devMode;
         this.context = context;
+        this.mod = mod;
         this.mDeliveryHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -150,7 +154,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
         try {
 
             inputStream  = response.body().byteStream();//输入流
-            data  = IOUtils.createFileOutputStream(context,mFilePath,filename);
+            data  = IOUtils.createFileOutputStream(context,mFilePath,filename,mod);
             if (data == null || data.getFos() == null){
                 mDeliveryHandler.obtainMessage(FAILURE_MESSAGE, new OkHttpException(OkHttpException.OTHER_ERROR, EMPTY_RESPONSE)).sendToTarget();
                 return;
@@ -225,6 +229,9 @@ public class CommonFileCallback extends CommonBase implements Callback {
         }
         Success success = new Success(data.getFilePath(),data.getFileName());
         mDeliveryHandler.sendMessageDelayed(mDeliveryHandler.obtainMessage(SUCCESS_MESSAGE,success),50);
+        if (!data.getFilePath().startsWith(Environment.getExternalStorageDirectory().getPath() + "/Android")){
+            IOUtils.fileScan(context,data.getFilePath());
+        }
     }
 
     private void checkLocalFilePath(String localFilePath) {

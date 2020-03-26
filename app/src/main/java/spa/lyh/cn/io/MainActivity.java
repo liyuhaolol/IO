@@ -68,6 +68,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         //String id = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
         //Log.e("liyuhao",id);
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+        //dir = getExternalCacheDir()+"/Q";
         fileName = "uuid.txt";
         File file = new File(dir+"/"+fileName);
         if (file.exists()){
@@ -110,6 +111,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 downloadFile(MainActivity.this,
                         "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
                         dir,
+                        IOUtils.OVERWRITE_FIRST,
                         new DisposeDownloadListener() {
                             @Override
                             public void onSuccess(String filePath, String fileName) {
@@ -130,7 +132,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 break;
             case R.id.insert:
                 try {
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(IOUtils.createFileOutputStream(this,dir,fileName).getFos()));
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(IOUtils.createFileOutputStream(this,dir,fileName,IOUtils.OVERWRITE_FIRST).getFos()));
                     out.write("测试文档1");
                     out.flush();
                     out.close();
@@ -162,10 +164,10 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
     }
 
 
-    public static Call downloadFile(Context context, String url, String path, DisposeDownloadListener listener) {
+    public static Call downloadFile(Context context, String url, String path, int mod,DisposeDownloadListener listener) {
         RequestParams params = new RequestParams();
         return CommonOkHttpClient.getInstance(context).downloadFile(context,
                 CommonRequest.createDownloadRequest(url, null, params, true),
-                new DisposeDataHandle(listener, path, true));
+                new DisposeDataHandle(listener, path, true),mod);
     }
 }

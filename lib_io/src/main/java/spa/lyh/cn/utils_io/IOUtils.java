@@ -29,6 +29,8 @@ import spa.lyh.cn.utils_io.model.FileDetail;
 public class IOUtils {
     private static String TAG = "IOUtils";
     private static String android = "/Android";//内部路径
+    public final static int OVERWRITE_FIRST = 1;
+    public final static int ADD_ONLY = 2;
 
     private static final String DEAFULT_FILE_NAME = "deafult";
 
@@ -208,7 +210,10 @@ public class IOUtils {
     }
 
 
-    public static FileData createFileOutputStream(Context context, String dirPath, String fileName){
+    public static FileData createFileOutputStream(Context context, String dirPath, String fileName,int mod){
+        if (isApkInDebug(context)){
+            Log.e(TAG,"MOD仅影响在应用内部存储逻辑，公共路径永久为ADD_ONLY。");
+        }
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         String lowFileName = getLowSuffixRightFileName(fileName);
         String mainPath;
@@ -228,7 +233,7 @@ public class IOUtils {
                 if (mainPath.startsWith(storagePath+android)){
                     //Log.e("liyuhao","私有存储空间");
                     //进入私有存储空间
-                    return ioUnder9(mainPath,lowFileName);
+                    return ioUnder9(mainPath,lowFileName,mod);
                 }else {
                     //进入公有存储空间
                     //Log.e("liyuhao","公有存储空间");
@@ -270,7 +275,13 @@ public class IOUtils {
             //Log.e("liyuhao","Android9以下");
             if (verifyStoragePath(mainPath)){
                 //路径是起步正确的
-                return ioUnder9(mainPath,lowFileName);
+                if (mainPath.startsWith(storagePath+android)){
+                    //Log.e("liyuhao","私有存储空间");
+                    //进入私有存储空间
+                    return ioUnder9(mainPath,lowFileName,mod);
+                }else {
+                    return ioUnder9(mainPath,lowFileName,ADD_ONLY);
+                }
             }else{
                 //路径不正确
                 return null;
@@ -455,11 +466,18 @@ public class IOUtils {
 
     }
 
-    private static FileData ioUnder9(String dirPath,String fileName){
+    private static FileData ioUnder9(String dirPath,String fileName,int mod){
         checkLocalFilePath(dirPath);
         //这里按道理，用10的标准，要做文件查重，先暂时搁置
         FileData data = new FileData();
-        data.setFileName(createFileName(dirPath,fileName));
+        switch (mod){
+            case OVERWRITE_FIRST:
+                data.setFileName(fileName);
+                break;
+            case ADD_ONLY:
+                data.setFileName(createFileName(dirPath,fileName));
+                break;
+        }
         data.setFilePath(dirPath+"/"+data.getFileName());
         try {
             data.setFos(new FileOutputStream(new File(data.getFilePath())));
