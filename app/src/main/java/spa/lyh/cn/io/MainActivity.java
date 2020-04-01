@@ -42,6 +42,8 @@ import spa.lyh.cn.lib_https.listener.DisposeDataHandle;
 import spa.lyh.cn.lib_https.listener.DisposeDownloadListener;
 import spa.lyh.cn.lib_https.request.CommonRequest;
 import spa.lyh.cn.lib_https.request.RequestParams;
+import spa.lyh.cn.peractivity.ManifestPro;
+import spa.lyh.cn.peractivity.PermissionActivity;
 import spa.lyh.cn.utils_io.IOUtils;
 
 public class MainActivity extends PermissionActivity implements View.OnClickListener {
@@ -64,7 +66,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         insert.setOnClickListener(this);
         insert2 = findViewById(R.id.insert2);
         insert2.setOnClickListener(this);
-        hasPermission(NOT_REQUIRED_ONLY_REQUEST, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE_BLOW_ANDROID_9);
         //String id = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
         //Log.e("liyuhao",id);
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
