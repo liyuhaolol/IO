@@ -79,35 +79,20 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         insert2.setOnClickListener(this);
         select = findViewById(R.id.select);
         select.setOnClickListener(this);
-        askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE_BLOW_ANDROID_9);
-        //String id = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-        //Log.e("liyuhao",id);
+        askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE);
+
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
         //dir = getExternalCacheDir()+"/Q";
         fileName = "uuid.txt";
+        //fileName = "5-140FGZ248-53.gif";
         File file = new File(dir+"/"+fileName);
         if (file.exists()){
-            Log.e("liyuhao","存在uuid");
+            Log.e("qwer","存在文件");
         }
-        Glide.with(MainActivity.this)
-                .asDrawable()
-                .load(IOUtils.getFileUri(this,dir+"/5-140FGZ248-53.gif"))
-                .into(image);
 
-       /*try {
-           FileInputStream in = IOUtils.getFileInputStream(MainActivity.this,dir+"/"+fileName);
-           if (in != null){
-               BufferedReader br = new BufferedReader(new InputStreamReader(in));
-               String lineTxt = br.readLine();
-               if (lineTxt != null){
-                   Log.e("liyuhao","内容为："+lineTxt);
-                   tv.setText(lineTxt);
-               }
-               br.close();
-           }
-       }catch (Exception e){
-           e.printStackTrace();
-       }*/
+        showPic(dir+"/5-140FGZ248-53.gif");
+
+        readShow();
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
@@ -122,21 +107,20 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 //https://downloads.openwrt.org/releases/19.07.1/targets/x86/64/packages/comgt-directip_0.32-32_x86_64.ipk
                 //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
 
-
                 downloadFile(MainActivity.this,
                         "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
-                        "/storage/0DE5-3D06/",
+                        dir,
                         IOUtils.OVERWRITE_FIRST,
                         new DisposeDownloadListener() {
                             @Override
                             public void onSuccess(String filePath, String fileName) {
                                 Toast.makeText(MainActivity.this,"下载成功",Toast.LENGTH_SHORT).show();
+                                showPic(filePath);
                             }
 
                             @Override
                             public void onFailure(Object reasonObj) {
                                 Toast.makeText(MainActivity.this,"下载失败",Toast.LENGTH_SHORT).show();
-                                Log.e("liyuhao","下载失败");
                             }
 
                             @Override
@@ -151,6 +135,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                     out.write("测试文档1");
                     out.flush();
                     out.close();
+                    readShow();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -162,6 +147,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                     out.write("测试文档2");
                     out.flush();
                     out.close();
+                    readShow();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -169,10 +155,8 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
             case R.id.delete:
                 if (IOUtils.delete(MainActivity.this,dir+"/"+fileName)){
                     Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
-                    Log.e("liyuhao","删除成功");
                 }else {
                     Toast.makeText(MainActivity.this,"删除失败",Toast.LENGTH_SHORT).show();
-                    Log.e("liyuhao","删除失败");
                 }
                 break;
             case R.id.select:
@@ -213,7 +197,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 .isCompress(false)
                 .synOrAsy(false)
                 //.withAspectRatio(1,1)
-                .isGif(false)
+                .isGif(true)
                 //.freeStyleCropEnabled(false)
                 //.compressSavePath(cacheFilePath)
                 //.setOutputCameraPath(cacheFilePath.substring(cacheFilePath.indexOf("Android")-1))
@@ -240,17 +224,51 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 // 如果裁剪并压缩了，以取压缩路径为准，因为是先裁剪后压缩的
                 for (LocalMedia localMedia : selectList) {
                     String path = localMedia.getRealPath();
-                    Log.e("qwer",path);
+                    //Log.e("qwer",path);
                     //Uri uri = IOUtils.getFileUri();
                     Glide.with(MainActivity.this)
                             .asDrawable()
                             .load(IOUtils.getFileUri(MainActivity.this,path))
-                            //.load(path)
                             .into(image);
                 }
                 break;
 
         }
     }
+
+
+
+    private void showPic(String filePath){
+        Glide.with(MainActivity.this)
+                .asDrawable()
+                .load(IOUtils.getFileUri(this,filePath))
+                .into(image);
+    }
+
+    private void readShow(){
+        try {
+            FileInputStream in = IOUtils.getFileInputStream(MainActivity.this,dir+"/"+fileName);
+            if (in != null){
+                BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                String lineTxt = br.readLine();
+                if (lineTxt != null){
+                    tv.setText(lineTxt);
+                }
+                br.close();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 
 }

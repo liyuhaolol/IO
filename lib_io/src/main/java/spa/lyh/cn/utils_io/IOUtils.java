@@ -220,43 +220,46 @@ public class IOUtils {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
             //Android10以上
-            //路径是起步正确的
-            //Environment.DIRECTORY_SCREENSHOTS
-            if (dirPath.startsWith(storagePath+android)){
-                //进入私有存储空间
-                return ioUnder9(dirPath,lowFileName,mod);
-            }else {
-                //进入公有存储空间
-                //Log.e("liyuhao","公有存储空间");
-                String mimeType = getMimeType(lowFileName);
-                ContentValues values = new ContentValues();
-                String relativePath = "/";
-                //这里用download，其实用谁都无所谓，只是一个string
-                values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
-                values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
-                values.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
-                Uri external = getUri();
-                if (external == null){
-                    return null;
-                }
-                ContentResolver resolver = context.getContentResolver();
-
-                Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
-                if (insertUri != null) {
-                    FileData data = new FileData();
-                    data.setFilePath(getRealFilePath(context,insertUri));
-                    data.setFileName(getFileName(data.getFilePath()));
-                    try{
-                        data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
-                        return data;
-                    }catch (FileNotFoundException e){
-                        e.printStackTrace();
+            if (dirPath.startsWith(storagePath)){
+                //是内置存储目录
+                if (dirPath.startsWith(storagePath+android)){
+                    //进入私有存储空间
+                    return ioUnder9(dirPath,lowFileName,mod);
+                }else {
+                    //进入公有存储空间
+                    String mimeType = getMimeType(lowFileName);
+                    ContentValues values = new ContentValues();
+                    String relativePath = dirPath.substring(storagePath.length()+1);
+                    //这里用download，其实用谁都无所谓，只是一个string
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
+                    values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
+                    Uri external = getUri();
+                    if (external == null){
                         return null;
                     }
+                    ContentResolver resolver = context.getContentResolver();
 
-                }else {
-                    return null;
+                    Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
+                    if (insertUri != null) {
+                        FileData data = new FileData();
+                        data.setFilePath(getRealFilePath(context,insertUri));
+                        data.setFileName(getFileName(data.getFilePath()));
+                        try{
+                            data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
+                            return data;
+                        }catch (FileNotFoundException e){
+                            e.printStackTrace();
+                            return null;
+                        }
+
+                    }else {
+                        return null;
+                    }
                 }
+            }else {
+                //其他存储目录，或者路径格式不规范
+                return null;
             }
         }else {
             //Android9以下
@@ -271,69 +274,59 @@ public class IOUtils {
     }
 
 
+    /**
+     * 删除文件
+     * @param context
+     * @param filePath
+     * @return
+     */
     public static boolean delete(Context context,String filePath){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
-        String tempPath;
-        if (filePath.startsWith("/sdcard")){
-            tempPath = storagePath + filePath.substring(7);
-        }else {
-            tempPath = filePath;
-        }
         File file;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            String dirPath = tempPath.substring(0,tempPath.lastIndexOf("/"));
-            String displayName = tempPath.substring(tempPath.lastIndexOf("/")+1);
-            if (verifyStoragePath(dirPath)){
-                if (dirPath.startsWith(storagePath+android)){
-                    //Log.e("liyuhao","私有存储空间");
-                    //进入私有存储空间
-                    file = new File(tempPath);
-                    if (file.exists()){
-                        return file.delete();
-                    }else {
-                        return false;
-                    }
-                }else {
-                    Uri external = getUri();
-                    ContentResolver resolver = context.getContentResolver();
-                    if (external != null){
-                        String relativePath = dirPath.replace(storagePath+"/","") + "/";
-                        int yes = resolver.delete(
-                                external,
-                                MediaStore.Downloads.DISPLAY_NAME + " = ? and "+MediaStore.Downloads.RELATIVE_PATH+ " = ?",
-                                new String[] {displayName,relativePath});
-                        if (yes > 0){
-                            //有记录被删了
-                            file = new File(filePath);
-                            if (file.exists()){
-                                fileScan(context,filePath);
-                                if (isApkInDebug(context)){
-                                    Log.e(TAG,"目前通过实践发现Android10系统下的某些公共文件夹，无法按照代码预期进行文件移除。"
-                                    + "基本确认是Android10的BUG，Android11测试已将此问题修复。"
-                                    + "如果项目实际使用中碰到了这个问题,请避免使用这个文件夹。或者引导用户手动移除该文件。");
-                                }
-                                return false;
-                            }else {
-                                return true;
-                            }
-                        }else {
-                            return false;
-                        }
-                    }else {
-                        return false;
-                    }
-                }
-            }else {
-                return false;
-            }
-        }else {
-            if (verifyStoragePath(tempPath)){
-                file = new File(tempPath);
+            if (filePath.startsWith(storagePath+android)){
+                //进入私有存储空间
+                file = new File(filePath);
                 if (file.exists()){
                     return file.delete();
                 }else {
                     return false;
                 }
+            }else {
+                Uri external = getUri();
+                ContentResolver resolver = context.getContentResolver();
+                if (external != null){
+                    String selection = MediaStore.Downloads.DATA + " = ?";
+                    int yes = resolver.delete(
+                            external,
+                            selection,
+                            new String[] {filePath});
+                    if (yes > 0){
+                        //有记录被删了
+                        file = new File(filePath);
+                        if (file.exists()){
+                            sendSystemScanBroadcast(context,filePath);
+                            if (isApkInDebug(context)){
+                                Log.e(TAG,"目前通过实践发现Android10系统下的某些公共文件夹，无法按照代码预期进行文件移除。"
+                                        + "基本确认是Android10的BUG，Android11测试已将此问题修复。"
+                                        + "如果项目实际使用中碰到了这个问题,请避免使用这个文件夹。或者引导用户手动移除该文件。");
+                            }
+                            return false;
+                        }else {
+                            return true;
+                        }
+                    }else {
+                        return false;
+                    }
+                }else {
+                    return false;
+                }
+            }
+        }else {
+            //Android9以下直接File操作删除
+            file = new File(filePath);
+            if (file.exists()){
+                return file.delete();
             }else {
                 return false;
             }
@@ -373,37 +366,13 @@ public class IOUtils {
         return MediaStore.Files.getContentUri("external");
     }
 
-    private static String getMimeType(String fileName){
-        String behind;
-        int  spot = fileName.lastIndexOf(".");
-        if (spot == 0){
-            //点在首位
-            behind = fileName.substring(spot);
 
-        }else if (spot == (fileName.length()-1)){
-            //点在末尾
-            behind = "";
-        }else if (spot != -1){
-            //点在中间
-            behind = fileName.substring(spot);
-        }else {
-            //不存在点
-            behind = "";
-        }
-        //如果只有.则去除后缀
-        if(behind.equals(".")){
-            behind = "";
-        }
-        //已经将文件名按照.分为2段,分别验证是否合法
-        behind = syncFileName(behind,true);
-        behind = behind.toLowerCase();
-        String mimeType = mimeTypeList.get(behind);
-        if (mimeType == null){
-            mimeType = "*/*";
-        }
-        return mimeType;
-    }
-
+    /**
+     * 验证文件名是否存在非法字符并裁切处理
+     * @param contnet
+     * @param isSuffix
+     * @return
+     */
     private static String syncFileName(String contnet,boolean isSuffix){
         //取得内容
         String syncContent = contnet;
@@ -448,6 +417,13 @@ public class IOUtils {
 
     }
 
+    /**
+     * 创建文件流的调用放方法
+     * @param dirPath
+     * @param fileName
+     * @param mod
+     * @return
+     */
     private static FileData ioUnder9(String dirPath,String fileName,int mod){
         checkLocalFilePath(dirPath);
         //这里按道理，用10的标准，要做文件查重，先暂时搁置
@@ -470,6 +446,14 @@ public class IOUtils {
         }
     }
 
+    /**
+     * 生产一个合法的文件名前置方法
+     * 这个方法是用来扫描对应文件夹路径下
+     * 所有存在的文件形成列表，传给下个方法进行文件命名
+     * @param dirPath
+     * @param fileName
+     * @return
+     */
     private static String createFileName(String dirPath,String fileName){
         if (list == null){
             list = new ArrayList<>();
@@ -491,8 +475,14 @@ public class IOUtils {
         return returnName(fileName,0);
     }
 
+    /**
+     * 返回一个合法没有存在的文件名
+     * 如果存在a.jpg,那么返回a(1).jpg按照Android的命名逻辑
+     * @param fileName
+     * @param index
+     * @return
+     */
     private static String returnName(String fileName,int index){
-        //Log.e("liyuhao","开始遍历");
         int mIndex = index;
         String front;
         String behind;
@@ -500,7 +490,6 @@ public class IOUtils {
 
         for (String string : list) {
             String readName = getLowSuffixRightFileName(string);
-            //Log.e("liyuhao",readName);
             if (fileName.equals(readName)){
                 //存在相同的文件名
                 mIndex++;
@@ -525,25 +514,50 @@ public class IOUtils {
     }
 
     /**
-     * 检查路径是否起码合法
-     * @param path
-     * @return
+     * 检查文件夹是否存在，不存在就创建文件夹
+     * @param localFilePath
      */
-    private static boolean verifyStoragePath(String path){
-        if (path.startsWith(Environment.getExternalStorageDirectory().getPath())){
-            //为正确的路径
-            return true;
-        }else {
-            Log.e("IOUtils","绝对路径可能存在错误");
-            return false;
-        }
-    }
-
     private static void checkLocalFilePath(String localFilePath) {
         File path = new File(localFilePath);
         if (!path.exists()) {
             path.mkdirs();
         }
+    }
+
+    /**
+     * 获取MimeType的类型
+     * @param fileName
+     * @return
+     */
+    public static String getMimeType(String fileName){
+        String behind;
+        int  spot = fileName.lastIndexOf(".");
+        if (spot == 0){
+            //点在首位
+            behind = fileName.substring(spot);
+
+        }else if (spot == (fileName.length()-1)){
+            //点在末尾
+            behind = "";
+        }else if (spot != -1){
+            //点在中间
+            behind = fileName.substring(spot);
+        }else {
+            //不存在点
+            behind = "";
+        }
+        //如果只有.则去除后缀
+        if(behind.equals(".")){
+            behind = "";
+        }
+        //已经将文件名按照.分为2段,分别验证是否合法
+        behind = syncFileName(behind,true);
+        behind = behind.toLowerCase();
+        String mimeType = mimeTypeList.get(behind);
+        if (mimeType == null){
+            mimeType = "*/*";
+        }
+        return mimeType;
     }
 
     /**
@@ -580,11 +594,17 @@ public class IOUtils {
      * @param filePath
      * @return
      */
-    private static String getFileName(String filePath){
+    public static String getFileName(String filePath){
         String[] strArr = filePath.split("/");
         return strArr[strArr.length-1];
     }
 
+    /**
+     * 将文件名后缀转换为小写，用于后续匹配mineType等操作
+     * 一般文件后缀也不应为大写
+     * @param fileName
+     * @return
+     */
     private static String getLowSuffixRightFileName(String fileName){
         String front;
         String behind = "";
@@ -617,6 +637,11 @@ public class IOUtils {
         return front+behind;
     }
 
+    /**
+     * 得到纯文件名
+     * @param fileName
+     * @return
+     */
     private static String getFront(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String front;
@@ -631,6 +656,11 @@ public class IOUtils {
         return front;
     }
 
+    /**
+     * 得到纯后缀
+     * @param fileName
+     * @return
+     */
     private static String getBehind(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String behind;
@@ -647,37 +677,27 @@ public class IOUtils {
     }
 
     @TargetApi(29)
-    public static FileDetail queryFile(Context context, String filePath) {
+    private static FileDetail queryFile(Context context, String filePath) {
         return queryFile(context,filePath,1);
     }
 
     @TargetApi(29)
     private static FileDetail queryFile(Context context, String filePath,int times){
         if (times <= 2){
-            String storagePath = Environment.getExternalStorageDirectory().getPath();
-            String fileName = getFileName(filePath);
-            String lowFileName = getLowSuffixRightFileName(fileName);
-            String mainPath;
+            //String storagePath = Environment.getExternalStorageDirectory().getPath();
+            //String fileName = getFileName(filePath);
+            //String lowFileName = getLowSuffixRightFileName(fileName);
+            //String mainPath;
             FileDetail detail = null;
-            if (filePath.startsWith("/sdcard")){
-                //非标准写法,转换为标准写法
-                mainPath = filePath.substring(8).replace(fileName,"");
 
-            }else {
-                mainPath = filePath.replace(storagePath+"/","").replace(fileName,"").trim();
-            }
-
-            if (TextUtils.isEmpty(mainPath)){
-                mainPath = "/";
-            }
-
-            Log.e("qwer",mainPath);
             try {
-                String displayKey = MediaStore.Images.Media.DISPLAY_NAME;
-                String pathKey = MediaStore.Images.Media.RELATIVE_PATH;
+                //String displayKey = MediaStore.Images.Media.DISPLAY_NAME;
+                //String pathKey = MediaStore.Images.Media.RELATIVE_PATH;
+                String dataKey = MediaStore.Images.Media.DATA;
                 //查询的条件语句
-                String selection = displayKey + " = ? and "+pathKey + " = ?";
+                //String selection = displayKey + " = ? and "+pathKey + " = ?";
                 //String selection = displayKey + " = ?";
+                String selection = dataKey + " = ?";
                 //查询的sql
                 //Uri：指向外部存储Uri
                 //projection：查询那些结果
@@ -695,7 +715,7 @@ public class IOUtils {
                                             MediaStore.Images.Media.TITLE,
                                             MediaStore.Images.Media.RELATIVE_PATH},
                                     selection,
-                                    new String[]{lowFileName,mainPath},
+                                    new String[]{filePath},
                                     null);
 
                     //是否查询到了
@@ -726,7 +746,7 @@ public class IOUtils {
                 File file = new File(filePath);
                 if (file.exists()){
                     //文件存在，但是未能检索到
-                    fileScan(context,filePath);
+                    sendSystemScanBroadcast(context,filePath);
                     return queryFile(context,filePath,times+1);
                 }else {
                     return null;
@@ -737,7 +757,18 @@ public class IOUtils {
         }
     }
 
-    public static void fileScan(Context context,String filePath) {
+    /***
+     * 将文件通知系统扫描，可以被整个系统检索到
+     * 比如你使用File对象在公有路径新建一个图片，在系统轮询搜索之前
+     * 这个文件都不会被系统收集，相册内也无法显示，使用本方法通知
+     * 系统去主动收录传入文件
+     * 本方法一般使用在Android9.0以下用File对象操作时才会需要
+     * Android10以上一般使用Uri操作，自带此通知逻辑
+     * 本框架已经对Android9.0以下进行了兼容，不需要单独调用此方法
+     * @param context
+     * @param filePath
+     */
+    public static void sendSystemScanBroadcast(Context context,String filePath) {
         File file = new File(filePath);
         if (file.exists()){
             Uri data = Uri.fromFile(new File(filePath));

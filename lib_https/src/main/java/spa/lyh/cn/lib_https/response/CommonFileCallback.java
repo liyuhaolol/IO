@@ -230,7 +230,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
         Success success = new Success(data.getFilePath(),data.getFileName());
         mDeliveryHandler.sendMessageDelayed(mDeliveryHandler.obtainMessage(SUCCESS_MESSAGE,success),50);
         if (!data.getFilePath().startsWith(Environment.getExternalStorageDirectory().getPath() + "/Android")){
-            IOUtils.fileScan(context,data.getFilePath());
+            IOUtils.sendSystemScanBroadcast(context,data.getFilePath());
         }
     }
 
