@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -138,6 +139,75 @@ public class IOUtils {
         }
     }
 
+    /**
+     * 通过游标得到正确的文件路径
+     * @param context
+     * @param uri
+     * @return
+     */
+    private static String getFilePath(Context context,Uri uri ) {
+        if ( null == uri ){
+            return null;
+        }
+        final String scheme = uri.getScheme();
+        String data = null;
+        if ( scheme == null ){
+            data = uri.getPath();
+        } else if ( ContentResolver.SCHEME_FILE.equals( scheme ) ) {
+            data = uri.getPath();
+        } else if ( ContentResolver.SCHEME_CONTENT.equals( scheme ) ) {
+            Cursor cursor = context.getContentResolver().query( uri, new String[] { MediaStore.Video.VideoColumns.DATA }, null, null, null );
+            if ( null != cursor ) {
+                if ( cursor.moveToFirst() ) {
+                    int index = cursor.getColumnIndex( MediaStore.Video.VideoColumns.DATA );
+                    if ( index > -1 ) {
+                        data = cursor.getString( index );
+                    }
+                }
+                cursor.close();
+            }
+        }else if (DocumentsContract.isDocumentUri(context, uri)) {
+            if (isExternalStorageDocument(uri)) {
+                // ExternalStorageProvider
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                if ("primary".equalsIgnoreCase(type)) {
+                    path = Environment.getExternalStorageDirectory() + "/" + split[1];
+                    return path;
+                }
+            } else if (isDownloadsDocument(uri)) {
+                // DownloadsProvider
+                final String id = DocumentsContract.getDocumentId(uri);
+                if (id.startsWith("raw:")) {
+                    return id.replaceFirst("raw:", "");
+                }
+                final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                        Long.valueOf(id));
+                path = getDataColumn(context, contentUri, null, null);
+                return path;
+            } else if (isMediaDocument(uri)) {
+                // MediaProvider
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[]{split[1]};
+                path = getDataColumn(context, contentUri, selection, selectionArgs);
+                return path;
+            }
+        }
+        return data;
+    }
+
     public static FileInputStream getFileInputStream(Context context, String filePath){
         //实际测试，不管有没有权限，file.exists方法都可以使用
         File file = new File(filePath);
@@ -243,7 +313,7 @@ public class IOUtils {
                     Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
                     if (insertUri != null) {
                         FileData data = new FileData();
-                        data.setFilePath(getRealFilePath(context,insertUri));
+                        data.setFilePath(getFilePath(context,insertUri));
                         data.setFileName(getFileName(data.getFilePath()));
                         try{
                             data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
@@ -558,35 +628,6 @@ public class IOUtils {
             mimeType = "*/*";
         }
         return mimeType;
-    }
-
-    /**
-     * 通过游标得到正确的文件名
-     * @param context
-     * @param uri
-     * @return
-     */
-    private static String getRealFilePath(Context context,Uri uri ) {
-        if ( null == uri ) return null;
-        final String scheme = uri.getScheme();
-        String data = null;
-        if ( scheme == null )
-            data = uri.getPath();
-        else if ( ContentResolver.SCHEME_FILE.equals( scheme ) ) {
-            data = uri.getPath();
-        } else if ( ContentResolver.SCHEME_CONTENT.equals( scheme ) ) {
-            Cursor cursor = context.getContentResolver().query( uri, new String[] { MediaStore.Video.VideoColumns.DATA }, null, null, null );
-            if ( null != cursor ) {
-                if ( cursor.moveToFirst() ) {
-                    int index = cursor.getColumnIndex( MediaStore.Video.VideoColumns.DATA );
-                    if ( index > -1 ) {
-                        data = cursor.getString( index );
-                    }
-                }
-                cursor.close();
-            }
-        }
-        return data;
     }
 
     /**

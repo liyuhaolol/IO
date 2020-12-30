@@ -222,8 +222,9 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 // 2.media.getCutPath();为裁剪后path，需判断media.isCut();是否为true  注意：音视频除外
                 // 3.media.getCompressPath();为压缩后path，需判断media.isCompressed();是否为true  注意：音视频除外
                 // 如果裁剪并压缩了，以取压缩路径为准，因为是先裁剪后压缩的
+                String path = "";
                 for (LocalMedia localMedia : selectList) {
-                    String path = localMedia.getRealPath();
+                    path = localMedia.getRealPath();
                     //Log.e("qwer",path);
                     //Uri uri = IOUtils.getFileUri();
                     Glide.with(MainActivity.this)
@@ -231,6 +232,8 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                             .load(IOUtils.getFileUri(MainActivity.this,path))
                             .into(image);
                 }
+                Uri uri = IOUtils.getFileUri(MainActivity.this,path);
+                Log.e("qwer",IOUtils);
                 break;
 
         }
