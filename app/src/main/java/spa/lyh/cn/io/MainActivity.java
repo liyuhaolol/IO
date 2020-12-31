@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,6 +94,15 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         showPic(dir+"/5-140FGZ248-53.gif");
 
         readShow();
+
+        try {
+            /*RandomAccessFile mFile = new RandomAccessFile(dir+"/5-140FGZ248-53.gif","r");
+            Log.e("qwer",mFile.length()+"");*/
+            FileInputStream fis = IOUtils.getFileInputStream(this,dir+"/5-140FGZ248-53.gif");
+            Log.e("qwer",fis.getChannel().size()+"");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
