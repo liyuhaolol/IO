@@ -145,7 +145,7 @@ public class IOUtils {
      * @param uri
      * @return
      */
-    private static String getFilePath(Context context,Uri uri ) {
+    public static String getFilePath(Context context, Uri uri) {
         if ( null == uri ){
             return null;
         }
@@ -155,26 +155,14 @@ public class IOUtils {
             data = uri.getPath();
         } else if ( ContentResolver.SCHEME_FILE.equals( scheme ) ) {
             data = uri.getPath();
-        } else if ( ContentResolver.SCHEME_CONTENT.equals( scheme ) ) {
-            Cursor cursor = context.getContentResolver().query( uri, new String[] { MediaStore.Video.VideoColumns.DATA }, null, null, null );
-            if ( null != cursor ) {
-                if ( cursor.moveToFirst() ) {
-                    int index = cursor.getColumnIndex( MediaStore.Video.VideoColumns.DATA );
-                    if ( index > -1 ) {
-                        data = cursor.getString( index );
-                    }
-                }
-                cursor.close();
-            }
-        }else if (DocumentsContract.isDocumentUri(context, uri)) {
+        } else if (DocumentsContract.isDocumentUri(context, uri)) {
             if (isExternalStorageDocument(uri)) {
                 // ExternalStorageProvider
                 final String docId = DocumentsContract.getDocumentId(uri);
                 final String[] split = docId.split(":");
                 final String type = split[0];
                 if ("primary".equalsIgnoreCase(type)) {
-                    path = Environment.getExternalStorageDirectory() + "/" + split[1];
-                    return path;
+                    data = Environment.getExternalStorageDirectory() + "/" + split[1];
                 }
             } else if (isDownloadsDocument(uri)) {
                 // DownloadsProvider
@@ -184,8 +172,7 @@ public class IOUtils {
                 }
                 final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
                         Long.valueOf(id));
-                path = getDataColumn(context, contentUri, null, null);
-                return path;
+                data = getDataColumn(context, contentUri, null, null);
             } else if (isMediaDocument(uri)) {
                 // MediaProvider
                 final String docId = DocumentsContract.getDocumentId(uri);
@@ -201,8 +188,20 @@ public class IOUtils {
                 }
                 final String selection = "_id=?";
                 final String[] selectionArgs = new String[]{split[1]};
-                path = getDataColumn(context, contentUri, selection, selectionArgs);
-                return path;
+                if (contentUri != null){
+                    data = getDataColumn(context, contentUri, selection, selectionArgs);
+                }
+            }
+        }else if ( ContentResolver.SCHEME_CONTENT.equals( scheme ) ) {
+            Cursor cursor = context.getContentResolver().query( uri, new String[] { MediaStore.Video.VideoColumns.DATA }, null, null, null );
+            if ( null != cursor ) {
+                if ( cursor.moveToFirst() ) {
+                    int index = cursor.getColumnIndex( MediaStore.Video.VideoColumns.DATA );
+                    if ( index > -1 ) {
+                        data = cursor.getString( index );
+                    }
+                }
+                cursor.close();
             }
         }
         return data;
@@ -244,6 +243,16 @@ public class IOUtils {
         }
     }
 
+    public static FileInputStream getFileInPutStream(Context context, Uri uri){
+        FileInputStream fis = null;
+        try{
+            fis = (FileInputStream) context.getContentResolver().openInputStream(uri);
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return fis;
+    }
+
     public static FileOutputStream getFileOutputStream(Context context, String filePath){
         //实际测试，不管有没有权限，file.exists方法都可以使用
         File file = new File(filePath);
@@ -278,6 +287,16 @@ public class IOUtils {
         }else {
             return null;
         }
+    }
+
+    public static FileOutputStream getFileOutputStream(Context context, Uri uri){
+        FileOutputStream fos = null;
+        try{
+            fos = (FileOutputStream) context.getContentResolver().openOutputStream(uri);
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return fos;
     }
 
 
@@ -400,6 +419,32 @@ public class IOUtils {
             }else {
                 return false;
             }
+        }
+    }
+
+    public static boolean delete(Context context,Uri uri){
+        String filePath = getFilePath(context,uri);
+        int yes = context.getContentResolver().delete(uri, null, null);
+        if (yes > 0){
+            //有记录被删了
+            if(TextUtils.isEmpty(filePath)){
+                //可能是非媒体文件无法获取路径，只能假设删除成功
+                return true;
+            }
+            File file = new File(filePath);
+            if (file.exists()){
+                sendSystemScanBroadcast(context,filePath);
+                if (isApkInDebug(context)){
+                    Log.e(TAG,"目前通过实践发现Android10系统下的某些公共文件夹，无法按照代码预期进行文件移除。"
+                            + "基本确认是Android10的BUG，Android11测试已将此问题修复。"
+                            + "如果项目实际使用中碰到了这个问题,请避免使用这个文件夹。或者引导用户手动移除该文件。");
+                }
+                return false;
+            }else {
+                return true;
+            }
+        }else {
+            return false;
         }
     }
 
@@ -587,7 +632,7 @@ public class IOUtils {
      * 检查文件夹是否存在，不存在就创建文件夹
      * @param localFilePath
      */
-    private static void checkLocalFilePath(String localFilePath) {
+    public static void checkLocalFilePath(String localFilePath) {
         File path = new File(localFilePath);
         if (!path.exists()) {
             path.mkdirs();
@@ -683,7 +728,7 @@ public class IOUtils {
      * @param fileName
      * @return
      */
-    private static String getFront(String fileName){
+    public static String getFront(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String front;
         //不要判断其他情况在这个位置
@@ -702,7 +747,7 @@ public class IOUtils {
      * @param fileName
      * @return
      */
-    private static String getBehind(String fileName){
+    public static String getBehind(String fileName){
         int  spot = fileName.lastIndexOf(".");
         String behind;
 
@@ -827,5 +872,30 @@ public class IOUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+    private static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+    private static boolean isMediaDocument(Uri uri) {  return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {column};
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
     }
 }

@@ -243,7 +243,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                             .into(image);
                 }
                 Uri uri = IOUtils.getFileUri(MainActivity.this,path);
-                Log.e("qwer",IOUtils);
+                Log.e("qwer",IOUtils.getFilePath(MainActivity.this,uri));
                 break;
 
         }
