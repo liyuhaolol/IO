@@ -243,7 +243,7 @@ public class IOUtils {
         }
     }
 
-    public static FileInputStream getFileInPutStream(Context context, Uri uri){
+    public static FileInputStream getFileInputStream(Context context, Uri uri){
         FileInputStream fis = null;
         try{
             fis = (FileInputStream) context.getContentResolver().openInputStream(uri);

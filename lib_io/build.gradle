@@ -10,8 +10,8 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 30
-        versionCode 7
-        versionName "1.0.6"
+        versionCode 8
+        versionName "1.0.7"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -42,7 +42,7 @@ def libName = 'lib_io'
 
 group = "spa.lyh.cn"
 
-version = "1.0.6"
+version = "1.0.7"
 
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
