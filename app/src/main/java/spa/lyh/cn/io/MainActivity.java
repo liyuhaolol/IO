@@ -48,6 +48,8 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.transform.Result;
+
 import okhttp3.Call;
 import spa.lyh.cn.lib_https.CommonOkHttpClient;
 import spa.lyh.cn.lib_https.listener.DisposeDataHandle;
@@ -57,6 +59,7 @@ import spa.lyh.cn.lib_https.request.RequestParams;
 import spa.lyh.cn.peractivity.ManifestPro;
 import spa.lyh.cn.peractivity.PermissionActivity;
 import spa.lyh.cn.utils_io.IOUtils;
+import spa.lyh.cn.utils_io.model.FileData;
 
 public class MainActivity extends PermissionActivity implements View.OnClickListener {
     private Button download,delete,insert,insert2,select;
@@ -82,31 +85,41 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         select.setOnClickListener(this);
         askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE);
 
-        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+        //dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
         //dir = getExternalCacheDir()+"/Q";
         fileName = "uuid.txt";
         //fileName = "5-140FGZ248-53.gif";
-        File file = new File(dir+"/"+fileName);
+        /*File file = new File(dir+"/"+fileName);
         if (file.exists()){
             Log.e("qwer","存在文件");
-        }
+        }*/
 
-        showPic(dir+"/5-140FGZ248-53.gif");
+        //showPic(dir+"/5-140FGZ248-53.gif");
 
-        readShow();
+        //readShow();
 
-        try {
-            /*RandomAccessFile mFile = new RandomAccessFile(dir+"/5-140FGZ248-53.gif","r");
-            Log.e("qwer",mFile.length()+"");*/
+        /*try {
+            *//*RandomAccessFile mFile = new RandomAccessFile(dir+"/5-140FGZ248-53.gif","r");
+            Log.e("qwer",mFile.length()+"");*//*
             FileInputStream fis = IOUtils.getFileInputStream(this,dir+"/5-140FGZ248-53.gif");
             Log.e("qwer",fis.getChannel().size()+"");
         }catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
+        /*dir = getExternalCacheDir()+"/Q";
+        Log.e("qwer",dir);
+        File file = new File(dir);
+        if (!file.exists()){
+            file.mkdir();
+        }*/
+        /*String a = "/storage/emulated/0/Android/data/spa.lyh.cn.io/cache/Q/1.jpg";
+        showPic(a);*/
+        dir = "/storage/80FF-1C10/Download";
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
     //getObbDir().getPath()+"/Q"
+
 
     @Override
     public void onClick(View v) {
@@ -141,11 +154,16 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                 break;
             case R.id.insert:
                 try {
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(IOUtils.createFileOutputStream(this,dir,fileName,IOUtils.OVERWRITE_FIRST).getFos()));
-                    out.write("测试文档1");
-                    out.flush();
-                    out.close();
-                    readShow();
+                    FileData data = IOUtils.createFileOutputStream(this,dir,fileName,IOUtils.OVERWRITE_FIRST);
+                    if (data != null){
+                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getFos()));
+                        out.write("测试文档1");
+                        out.flush();
+                        out.close();
+                        readShow();
+                    }else {
+                        Log.e("qwer","无法创建文件");
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -226,24 +244,33 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case PictureConfig.CHOOSE_REQUEST:
-                List<LocalMedia> selectList = PictureSelector.obtainMultipleResult(data);
-                // 例如 LocalMedia 里面返回三种path
-                // 1.media.getPath(); 为原图path
-                // 2.media.getCutPath();为裁剪后path，需判断media.isCut();是否为true  注意：音视频除外
-                // 3.media.getCompressPath();为压缩后path，需判断media.isCompressed();是否为true  注意：音视频除外
-                // 如果裁剪并压缩了，以取压缩路径为准，因为是先裁剪后压缩的
-                String path = "";
-                for (LocalMedia localMedia : selectList) {
-                    path = localMedia.getRealPath();
-                    //Log.e("qwer",path);
-                    //Uri uri = IOUtils.getFileUri();
-                    Glide.with(MainActivity.this)
-                            .asDrawable()
-                            .load(IOUtils.getFileUri(MainActivity.this,path))
-                            .into(image);
+                if (resultCode == RESULT_OK){
+                    List<LocalMedia> selectList = PictureSelector.obtainMultipleResult(data);
+                    // 例如 LocalMedia 里面返回三种path
+                    // 1.media.getPath(); 为原图path
+                    // 2.media.getCutPath();为裁剪后path，需判断media.isCut();是否为true  注意：音视频除外
+                    // 3.media.getCompressPath();为压缩后path，需判断media.isCompressed();是否为true  注意：音视频除外
+                    // 如果裁剪并压缩了，以取压缩路径为准，因为是先裁剪后压缩的
+                    String path = "";
+                    for (LocalMedia localMedia : selectList) {
+                        path = localMedia.getRealPath();
+                        //Log.e("qwer",path);
+                        //Uri uri = IOUtils.getFileUri();
+                        Glide.with(MainActivity.this)
+                                .asDrawable()
+                                .load(IOUtils.getFileUri(MainActivity.this,path))
+                                .into(image);
+                    }
+                    Log.e("qwer",path);
+                    FileInputStream fis = IOUtils.getFileInputStream(this,path);
+                    if (fis == null){
+                        Log.e("qwer","空");
+                    }else {
+                        Log.e("qwer","不空");
+                    }
+                    /*Uri uri = IOUtils.getFileUri(MainActivity.this,path);
+                    Log.e("qwer",IOUtils.getFilePath(MainActivity.this,uri));*/
                 }
-                Uri uri = IOUtils.getFileUri(MainActivity.this,path);
-                Log.e("qwer",IOUtils.getFilePath(MainActivity.this,uri));
                 break;
 
         }

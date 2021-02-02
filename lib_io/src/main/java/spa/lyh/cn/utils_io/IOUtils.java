@@ -115,21 +115,29 @@ public class IOUtils {
 
 
     public static Uri getFileUri(Context context, String filePath){
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
         //实际测试，不管有没有权限，file.exists方法都可以使用
         File file = new File(filePath);
         if (file.exists()){
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-                FileDetail detail = queryFile(context,filePath);
-                if (detail != null){
-                    Uri contentUri = getUri();
-                    if (contentUri != null){
-                        return ContentUris.withAppendedId(contentUri, detail.getId());
+                //Android10以上
+                if (filePath.startsWith(storagePath+android)){
+                    //进入私有存储空间
+                    return Uri.fromFile(file);
+                }else {
+                    //进入共享存储空间,或SD卡
+                    FileDetail detail = queryFile(context,filePath);
+                    if (detail != null){
+                        Uri contentUri = getUri();
+                        if (contentUri != null){
+                            return ContentUris.withAppendedId(contentUri, detail.getId());
+                        }else {
+                            return null;
+                        }
                     }else {
                         return null;
                     }
-                }else {
-                    return null;
                 }
             }else {
                 return Uri.fromFile(file);
@@ -215,40 +223,33 @@ public class IOUtils {
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
                 //Android10以上
-                if (filePath.startsWith(storagePath)){
-                    //是内置存储目录
-                    if (filePath.startsWith(storagePath+android)){
-                        //进入私有存储空间
-                        try {
-                            return new FileInputStream(file);
-                        }catch (FileNotFoundException e){
-                            e.printStackTrace();
-                            return null;
-                        }
-
-                    }else {
-                        //进入共享存储空间
-                        FileDetail detail = queryFile(context,filePath);
-                        if (detail != null){
-                            Uri contentUri = getUri();
-                            if (contentUri != null){
-                                Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
-                                try{
-                                    return (FileInputStream) context.getContentResolver().openInputStream(fileUri);
-                                }catch (FileNotFoundException e){
-                                    e.printStackTrace();
-                                    return null;
-                                }
-                            }else {
+                if (filePath.startsWith(storagePath+android)){
+                    //进入私有存储空间
+                    try {
+                        return new FileInputStream(file);
+                    }catch (FileNotFoundException e){
+                        e.printStackTrace();
+                        return null;
+                    }
+                }else {
+                    //进入共享存储空间
+                    FileDetail detail = queryFile(context,filePath);
+                    if (detail != null){
+                        Uri contentUri = getUri();
+                        if (contentUri != null){
+                            Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
+                            try{
+                                return (FileInputStream) context.getContentResolver().openInputStream(fileUri);
+                            }catch (FileNotFoundException e){
+                                e.printStackTrace();
                                 return null;
                             }
                         }else {
                             return null;
                         }
+                    }else {
+                        return null;
                     }
-                }else {
-                    //路径错误或不合法
-                    return null;
                 }
             }else {
                 try{
@@ -280,39 +281,33 @@ public class IOUtils {
         if (file.exists()){
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-                if (filePath.startsWith(storagePath)){
-                    //是内置存储目录
-                    if (filePath.startsWith(storagePath+android)){
-                        //进入私有存储空间
-                        try {
-                            return new FileOutputStream(file);
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    }else {
-                        //进入共享存储空间
-                        FileDetail detail = queryFile(context,filePath);
-                        if (detail != null){
-                            Uri contentUri = getUri();
-                            if (contentUri != null){
-                                Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
-                                try{
-                                    return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
-                                }catch (FileNotFoundException e){
-                                    e.printStackTrace();
-                                    return null;
-                                }
-                            }else {
+                if (filePath.startsWith(storagePath+android)){
+                    //进入私有存储空间
+                    try {
+                        return new FileOutputStream(file);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }else {
+                    //进入共享存储空间
+                    FileDetail detail = queryFile(context,filePath);
+                    if (detail != null){
+                        Uri contentUri = getUri();
+                        if (contentUri != null){
+                            Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
+                            try{
+                                return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
+                            }catch (FileNotFoundException e){
+                                e.printStackTrace();
                                 return null;
                             }
                         }else {
                             return null;
                         }
+                    }else {
+                        return null;
                     }
-                }else {
-                    //路径错误或不合法
-                    return null;
                 }
             }else {
                 try {
@@ -347,47 +342,53 @@ public class IOUtils {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
             //Android10以上
-            if (dirPath.startsWith(storagePath)){
-                //是内置存储目录
-                if (dirPath.startsWith(storagePath+android)){
-                    //进入私有存储空间
-                    return ioUnder9(dirPath,lowFileName,mod);
-                }else {
-                    //进入公有存储空间
-                    String mimeType = getMimeType(lowFileName);
-                    ContentValues values = new ContentValues();
-                    String relativePath = dirPath.substring(storagePath.length()+1);
-                    //这里用download，其实用谁都无所谓，只是一个string
-                    values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
-                    values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
-                    Uri external = getUri();
-                    if (external == null){
-                        return null;
-                    }
-                    ContentResolver resolver = context.getContentResolver();
-
-                    Uri insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
-                    if (insertUri != null) {
-                        FileData data = new FileData();
-                        data.setFilePath(getFilePath(context,insertUri));
-                        data.setFileName(getFileName(data.getFilePath()));
-                        try{
-                            data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
-                            return data;
-                        }catch (FileNotFoundException e){
-                            e.printStackTrace();
-                            return null;
-                        }
-
-                    }else {
-                        return null;
-                    }
+            if (dirPath.startsWith(storagePath+android)){
+                //进入私有存储空间
+                return ioUnder9(dirPath,lowFileName,mod);
+            }else {
+                //进入公有存储空间
+                String mimeType = getMimeType(lowFileName);
+                ContentValues values = new ContentValues();
+                String relativePath = dirPath.substring(storagePath.length()+1);
+                //这里用download，其实用谁都无所谓，只是一个string
+                values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
+                values.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
+                Uri external = getUri();
+                if (external == null){
+                    return null;
                 }
+                ContentResolver resolver = context.getContentResolver();
+                Uri insertUri;
+                try {
+                    insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return null;
+                }
+                if (insertUri != null) {
+                    FileData data = new FileData();
+                    data.setFilePath(getFilePath(context,insertUri));
+                    data.setFileName(getFileName(data.getFilePath()));
+                    try{
+                        data.setFos((FileOutputStream) resolver.openOutputStream(insertUri));
+                        return data;
+                    }catch (FileNotFoundException e){
+                        e.printStackTrace();
+                        return null;
+                    }
+
+                }else {
+                    return null;
+                }
+            }
+            /*if (dirPath.startsWith(storagePath)){
+                //是内置存储目录
+
             }else {
                 //其他存储目录，或者路径格式不规范
                 return null;
-            }
+            }*/
         }else {
             //Android9以下
             //路径是起步正确的
