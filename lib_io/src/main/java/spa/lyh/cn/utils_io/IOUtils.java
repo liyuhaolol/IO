@@ -208,26 +208,46 @@ public class IOUtils {
     }
 
     public static FileInputStream getFileInputStream(Context context, String filePath){
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
         //实际测试，不管有没有权限，file.exists方法都可以使用
         File file = new File(filePath);
         if (file.exists()){
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-                FileDetail detail = queryFile(context,filePath);
-                if (detail != null){
-                    Uri contentUri = getUri();
-                    if (contentUri != null){
-                        Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
-                        try{
-                            return (FileInputStream) context.getContentResolver().openInputStream(fileUri);
+                //Android10以上
+                if (filePath.startsWith(storagePath)){
+                    //是内置存储目录
+                    if (filePath.startsWith(storagePath+android)){
+                        //进入私有存储空间
+                        try {
+                            return new FileInputStream(file);
                         }catch (FileNotFoundException e){
                             e.printStackTrace();
                             return null;
                         }
+
                     }else {
-                        return null;
+                        //进入共享存储空间
+                        FileDetail detail = queryFile(context,filePath);
+                        if (detail != null){
+                            Uri contentUri = getUri();
+                            if (contentUri != null){
+                                Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
+                                try{
+                                    return (FileInputStream) context.getContentResolver().openInputStream(fileUri);
+                                }catch (FileNotFoundException e){
+                                    e.printStackTrace();
+                                    return null;
+                                }
+                            }else {
+                                return null;
+                            }
+                        }else {
+                            return null;
+                        }
                     }
                 }else {
+                    //路径错误或不合法
                     return null;
                 }
             }else {
@@ -254,26 +274,44 @@ public class IOUtils {
     }
 
     public static FileOutputStream getFileOutputStream(Context context, String filePath){
+        String storagePath = Environment.getExternalStorageDirectory().getPath();
         //实际测试，不管有没有权限，file.exists方法都可以使用
         File file = new File(filePath);
         if (file.exists()){
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-                FileDetail detail = queryFile(context,filePath);
-                if (detail != null){
-                    Uri contentUri = getUri();
-                    if (contentUri != null){
-                        Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
-                        try{
-                            return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
-                        }catch (FileNotFoundException e){
+                if (filePath.startsWith(storagePath)){
+                    //是内置存储目录
+                    if (filePath.startsWith(storagePath+android)){
+                        //进入私有存储空间
+                        try {
+                            return new FileOutputStream(file);
+                        } catch (FileNotFoundException e) {
                             e.printStackTrace();
                             return null;
                         }
                     }else {
-                        return null;
+                        //进入共享存储空间
+                        FileDetail detail = queryFile(context,filePath);
+                        if (detail != null){
+                            Uri contentUri = getUri();
+                            if (contentUri != null){
+                                Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
+                                try{
+                                    return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
+                                }catch (FileNotFoundException e){
+                                    e.printStackTrace();
+                                    return null;
+                                }
+                            }else {
+                                return null;
+                            }
+                        }else {
+                            return null;
+                        }
                     }
                 }else {
+                    //路径错误或不合法
                     return null;
                 }
             }else {
