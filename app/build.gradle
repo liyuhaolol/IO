@@ -27,7 +27,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'spa.lyh.cn:peractivity:1.0.3'
+    implementation 'com.github.liyuhaolol:Permission:1.0.4'
     //implementation 'spa.lyh.cn:lib_utils:1.0.0'
     implementation project(':lib_io')
     implementation project(':lib_https')

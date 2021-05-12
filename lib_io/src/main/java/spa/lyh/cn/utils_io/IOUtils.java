@@ -129,7 +129,7 @@ public class IOUtils {
                     //进入共享存储空间,或SD卡
                     FileDetail detail = queryFile(context,filePath);
                     if (detail != null){
-                        Uri contentUri = getUri();
+                        Uri contentUri = getUri(filePath);
                         if (contentUri != null){
                             return ContentUris.withAppendedId(contentUri, detail.getId());
                         }else {
@@ -235,7 +235,7 @@ public class IOUtils {
                     //进入共享存储空间
                     FileDetail detail = queryFile(context,filePath);
                     if (detail != null){
-                        Uri contentUri = getUri();
+                        Uri contentUri = getUri(filePath);
                         if (contentUri != null){
                             Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
                             try{
@@ -293,7 +293,7 @@ public class IOUtils {
                     //进入共享存储空间
                     FileDetail detail = queryFile(context,filePath);
                     if (detail != null){
-                        Uri contentUri = getUri();
+                        Uri contentUri = getUri(filePath);
                         if (contentUri != null){
                             Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
                             try{
@@ -354,7 +354,7 @@ public class IOUtils {
                 values.put(MediaStore.Downloads.DISPLAY_NAME, lowFileName);
                 values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
                 values.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
-                Uri external = getUri();
+                Uri external = getUri(dirPath+"/"+lowFileName);
                 if (external == null){
                     return null;
                 }
@@ -421,7 +421,7 @@ public class IOUtils {
                     return false;
                 }
             }else {
-                Uri external = getUri();
+                Uri external = getUri(filePath);
                 ContentResolver resolver = context.getContentResolver();
                 if (external != null){
                     String selection = MediaStore.Downloads.DATA + " = ?";
@@ -488,8 +488,9 @@ public class IOUtils {
     }
 
     @TargetApi(29)
-    private static Uri getUri(){
-        /*String pubPath = Environment.getExternalStorageDirectory().getPath();
+    private static Uri getUri(String path){
+        String pubPath = Environment.getExternalStorageDirectory().getPath();
+        String mimeType = getMimeType(path);
         if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOWNLOADS)){
             //return MediaStore.Downloads.EXTERNAL_CONTENT_URI;//官方api竟然不好使，你敢信，你敢信？
             return MediaStore.Files.getContentUri("external");
@@ -515,9 +516,9 @@ public class IOUtils {
             return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOCUMENTS)){
             return MediaStore.Files.getContentUri("external");
+        }else{
+            return MediaStore.Files.getContentUri("external");
         }
-        return null;*/
-        return MediaStore.Files.getContentUri("external");
     }
 
 
@@ -828,7 +829,7 @@ public class IOUtils {
                 //projection：查询那些结果
                 //selection：查询的where条件
                 //sortOrder：排序
-                Uri uri = getUri();
+                Uri uri = getUri(filePath);
                 if (uri != null){
                     Cursor cursor = context
                             .getContentResolver()

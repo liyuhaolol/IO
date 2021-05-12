@@ -85,7 +85,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         select.setOnClickListener(this);
         askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE);
 
-        //dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+        dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
         //dir = getExternalCacheDir()+"/Q";
         fileName = "uuid.txt";
         //fileName = "5-140FGZ248-53.gif";
@@ -114,12 +114,51 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         }*/
         /*String a = "/storage/emulated/0/Android/data/spa.lyh.cn.io/cache/Q/1.jpg";
         showPic(a);*/
-        dir = "/storage/80FF-1C10/Download";
+        //dir = "/storage/80FF-1C10/Download";
+        makeFile();
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
     //getObbDir().getPath()+"/Q"
 
+
+    private void makeFile(){
+        String pathA = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/did";
+        String fileNameA = "did.png";
+        File file = new File(pathA +"/"+ fileNameA);
+        if (file.exists()){
+            //存在
+            try {
+                FileInputStream in = IOUtils.getFileInputStream(MainActivity.this,pathA+"/"+fileNameA);
+                if (in != null){
+                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                    String lineTxt = br.readLine();
+                    if (lineTxt != null){
+                        tv.setText(lineTxt);
+                    }
+                    br.close();
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }else {
+            //不存在
+            try {
+                FileData data = IOUtils.createFileOutputStream(this,pathA,fileNameA,IOUtils.OVERWRITE_FIRST);
+                if (data != null){
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getFos()));
+                    out.write("12345");
+                    out.flush();
+                    out.close();
+                    readShow();
+                }else {
+                    Log.e("qwer","无法创建文件");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     @Override
     public void onClick(View v) {
