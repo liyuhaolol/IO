@@ -123,7 +123,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
 
     private void makeFile(){
-        String pathA = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/did";
+        String pathA = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)+"/did";
         String fileNameA = "did.png";
         File file = new File(pathA +"/"+ fileNameA);
         if (file.exists()){
