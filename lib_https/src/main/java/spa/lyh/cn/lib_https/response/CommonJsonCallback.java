@@ -3,8 +3,9 @@ package spa.lyh.cn.lib_https.response;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
+
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.TypeReference;
 
 import java.io.IOException;
 import java.util.ArrayList;

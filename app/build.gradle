@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    namespace 'spa.lyh.cn.io'
+    compileSdk 34
+
     defaultConfig {
         applicationId "spa.lyh.cn.io"
-        minSdkVersion 21
-        targetSdkVersion 30
+        minSdk 21
+        targetSdk 34
         versionCode 1
         versionName "1.0"
     }
@@ -26,8 +27,8 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'com.github.liyuhaolol:Permission:1.0.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.github.liyuhaolol:Permission:1.2.1'
     //implementation 'spa.lyh.cn:lib_utils:1.0.0'
     implementation project(':lib_io')
     implementation project(':lib_https')

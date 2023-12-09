@@ -1,6 +1,7 @@
 package spa.lyh.cn.lib_https.listener;
 
-import com.alibaba.fastjson.TypeReference;
+
+import com.alibaba.fastjson2.TypeReference;
 
 /**
  * @author liyuhao
