@@ -275,6 +275,10 @@ public class IOUtils {
     }
 
     public static FileOutputStream getFileOutputStream(Context context, String filePath){
+        return getFileOutputStream(context,filePath,false);
+    }
+
+    public static FileOutputStream getFileOutputStream(Context context, String filePath,boolean append){
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         //实际测试，不管有没有权限，file.exists方法都可以使用
         File file = new File(filePath);
@@ -297,7 +301,12 @@ public class IOUtils {
                         if (contentUri != null){
                             Uri fileUri = ContentUris.withAppendedId(contentUri, detail.getId());
                             try{
-                                return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
+                                if (append){
+                                    return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri,"wa");
+                                }else {
+                                    return (FileOutputStream) context.getContentResolver().openOutputStream(fileUri);
+                                }
+
                             }catch (FileNotFoundException e){
                                 e.printStackTrace();
                                 return null;
@@ -311,7 +320,7 @@ public class IOUtils {
                 }
             }else {
                 try {
-                    return new FileOutputStream(file);
+                    return new FileOutputStream(file,append);
                 }catch (FileNotFoundException e){
                     e.printStackTrace();
                     return null;
@@ -323,9 +332,27 @@ public class IOUtils {
     }
 
     public static FileOutputStream getFileOutputStream(Context context, Uri uri){
+        return getFileOutputStream(context,uri,false);
+    }
+
+    public static FileOutputStream getFileOutputStream(Context context, Uri uri,boolean append){
         FileOutputStream fos = null;
         try{
-            fos = (FileOutputStream) context.getContentResolver().openOutputStream(uri);
+            if (append){
+                fos = (FileOutputStream) context.getContentResolver().openOutputStream(uri,"wa");
+            }else{
+                fos = (FileOutputStream) context.getContentResolver().openOutputStream(uri);
+            }
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
+        return fos;
+    }
+
+    public static FileOutputStream getFileOutputStream(Context context, Uri uri,String mode){
+        FileOutputStream fos = null;
+        try{
+            fos = (FileOutputStream) context.getContentResolver().openOutputStream(uri,mode);
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
@@ -850,12 +877,30 @@ public class IOUtils {
                         detail = new FileDetail();
                         do {
                             //一张图片的基本信息
-                            detail.setId(cursor.getInt(cursor.getColumnIndex(MediaStore.Images.Media._ID)));
-                            detail.setData(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA)));
-                            detail.setMineType(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE)));
-                            detail.setDisplayName(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));
-                            detail.setTitle(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.TITLE)));
-                            detail.setRelativePath(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH)));
+                            int id = cursor.getColumnIndex(MediaStore.Images.Media._ID);
+                            if (id >= 0){
+                                detail.setId(cursor.getInt(id));
+                            }
+                            int data = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+                            if (data >= 0){
+                                detail.setData(cursor.getString(data));
+                            }
+                            int mimeType = cursor.getColumnIndex(MediaStore.Images.Media.MIME_TYPE);
+                            if (mimeType >= 0){
+                                detail.setMineType(cursor.getString(mimeType));
+                            }
+                            int name = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+                            if (name >= 0){
+                                detail.setDisplayName(cursor.getString(name));
+                            }
+                            int title = cursor.getColumnIndex(MediaStore.Images.Media.TITLE);
+                            if (title >= 0){
+                                detail.setTitle(cursor.getString(title));
+                            }
+                            int path = cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH);
+                            if (path >= 0){
+                                detail.setRelativePath(cursor.getString(path));
+                            }
                             //并不会有下一次，这个方法的逻辑指定到具体文件夹下的文件检索，不会出现复数文件
                         } while (cursor.moveToNext());
                     }
