@@ -27,11 +27,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.luck.picture.lib.PictureSelector;
-import com.luck.picture.lib.config.PictureConfig;
-import com.luck.picture.lib.config.PictureMimeType;
-import com.luck.picture.lib.entity.LocalMedia;
-import com.luck.picture.lib.style.PictureSelectorUIStyle;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -62,7 +57,7 @@ import spa.lyh.cn.utils_io.IOUtils;
 import spa.lyh.cn.utils_io.model.FileData;
 
 public class MainActivity extends PermissionActivity implements View.OnClickListener {
-    private Button download,delete,insert,insert2,select;
+    private Button download,delete,insert,insert2;
     private String dir,fileName;
     private ImageView image;
     private TextView tv;
@@ -81,8 +76,6 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         insert.setOnClickListener(this);
         insert2 = findViewById(R.id.insert2);
         insert2.setOnClickListener(this);
-        select = findViewById(R.id.select);
-        select.setOnClickListener(this);
         askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE);
 
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
@@ -226,9 +219,6 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                     Toast.makeText(MainActivity.this,"删除失败",Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case R.id.select:
-                open();
-                break;
         }
     }
 
@@ -238,81 +228,6 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         return CommonOkHttpClient.getInstance(context).downloadFile(context,
                 CommonRequest.createDownloadRequest(url, null, params, true),
                 new DisposeDataHandle(listener, path, true),mod);
-    }
-
-    private void open(){
-        PictureSelector.create(this)
-                .openGallery(PictureMimeType.ofImage())
-                .imageEngine(GlideEngine.createGlideEngine())
-                //.setPictureUIStyle(new PictureSelectorUIStyle())
-                //.setPictureCropStyle(PicStyle.getCropStyle(activity))
-                .isWeChatStyle(false)
-                .setPictureWindowAnimationStyle(PicStyle.getPicAnimation(this))
-                .isWithVideoImage(false)
-                .imageFormat(PictureMimeType.PNG)
-                .maxSelectNum(1)// 最大图片选择数量
-                .minSelectNum(1)// 最小选择数量
-                .imageSpanCount(4)// 每行显示个数
-                .isReturnEmpty(false)// 未选择数据时点击按钮是否可以返回
-                .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-                .selectionMode(PictureConfig.SINGLE)// 多选 or 单选
-                .isSingleDirectReturn(true)// 单选模式下是否直接返回，PictureConfig.SINGLE模式下有效
-                .isPreviewImage(true)// 是否可预览图片
-                .isCamera(false)
-                .isZoomAnim(false)// 图片列表点击 缩放效果 默认true
-                //.enableCrop(true)
-                .isCompress(false)
-                .synOrAsy(false)
-                //.withAspectRatio(1,1)
-                .isGif(true)
-                //.freeStyleCropEnabled(false)
-                //.compressSavePath(cacheFilePath)
-                //.setOutputCameraPath(cacheFilePath.substring(cacheFilePath.indexOf("Android")-1))
-                //.circleDimmedLayer(false)
-                //.showCropFrame(true)
-                //.showCropGrid(true)
-                .isOpenClickSound(false)// 是否开启点击声音
-                //.isDragFrame(false)
-                //.cutOutQuality(90)// 裁剪输出质量 默认100
-                //.minimumCompressSize(100)// 小于100kb的图片不压缩
-                .forResult(PictureConfig.CHOOSE_REQUEST);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case PictureConfig.CHOOSE_REQUEST:
-                if (resultCode == RESULT_OK){
-                    List<LocalMedia> selectList = PictureSelector.obtainMultipleResult(data);
-                    // 例如 LocalMedia 里面返回三种path
-                    // 1.media.getPath(); 为原图path
-                    // 2.media.getCutPath();为裁剪后path，需判断media.isCut();是否为true  注意：音视频除外
-                    // 3.media.getCompressPath();为压缩后path，需判断media.isCompressed();是否为true  注意：音视频除外
-                    // 如果裁剪并压缩了，以取压缩路径为准，因为是先裁剪后压缩的
-                    String path = "";
-                    for (LocalMedia localMedia : selectList) {
-                        path = localMedia.getRealPath();
-                        //Log.e("qwer",path);
-                        //Uri uri = IOUtils.getFileUri();
-                        Glide.with(MainActivity.this)
-                                .asDrawable()
-                                .load(IOUtils.getFileUri(MainActivity.this,path))
-                                .into(image);
-                    }
-                    Log.e("qwer",path);
-                    FileInputStream fis = IOUtils.getFileInputStream(this,path);
-                    if (fis == null){
-                        Log.e("qwer","空");
-                    }else {
-                        Log.e("qwer","不空");
-                    }
-                    /*Uri uri = IOUtils.getFileUri(MainActivity.this,path);
-                    Log.e("qwer",IOUtils.getFilePath(MainActivity.this,uri));*/
-                }
-                break;
-
-        }
     }
 
 
