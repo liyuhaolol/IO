@@ -11,7 +11,7 @@ plugins {
 val versionName = "1.1.3"
 
 android {
-    namespace = "spa.lyh.cn.lib_utils"
+    namespace = "spa.lyh.cn.utils_io"
     compileSdk = 34
 
     defaultConfig {
