@@ -8,7 +8,7 @@ plugins {
     id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.3"
 }
 
-val versionName = "1.1.3"
+val versionName = "1.1.4"
 
 android {
     namespace = "spa.lyh.cn.utils_io"
