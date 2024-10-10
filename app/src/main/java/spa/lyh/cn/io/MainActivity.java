@@ -33,6 +33,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
@@ -76,9 +77,22 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         insert.setOnClickListener(this);
         insert2 = findViewById(R.id.insert2);
         insert2.setOnClickListener(this);
-        askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE);
+        //askForPermission(NOT_REQUIRED_ONLY_REQUEST, ManifestPro.permission.WRITE_EXTERNAL_STORAGE);
 
         dir = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q";
+/*        String filePath = Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/a.jpeg";
+        File file = new File(filePath);
+        if (file.exists()){
+            Log.e("qwer","文件存在");
+            Log.e("qwer","文件大小"+file.length());
+            try {
+                //FileInputStream fis = new FileInputStream(file);
+                Uri uri = Uri.fromFile(file);
+                FileInputStream fis2 = (FileInputStream) getContentResolver().openInputStream(uri);
+            } catch (FileNotFoundException e) {
+               e.printStackTrace();
+            }
+        }*/
         //dir = getExternalCacheDir()+"/Q";
         fileName = "uuid.txt";
         //fileName = "5-140FGZ248-53.gif";
@@ -109,6 +123,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         showPic(a);*/
         //dir = "/storage/80FF-1C10/Download";
         makeFile();
+
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"

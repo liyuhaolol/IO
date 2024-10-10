@@ -31,6 +31,8 @@ import spa.lyh.cn.utils_io.model.FileDetail;
 public class IOUtils {
     private static String TAG = "IOUtils";
     private static String android = "/Android";//内部路径
+    private static String fakeStartPath = "/sdcard/.transforms/synthetic";
+
     public final static int OVERWRITE_FIRST = 1;
     public final static int ADD_ONLY = 2;
 
@@ -48,6 +50,9 @@ public class IOUtils {
         mimeTypeList.put(".avi","video/x-msvideo");
         mimeTypeList.put(".bin","application/octet-stream");
         mimeTypeList.put(".bmp","image/bmp");
+        mimeTypeList.put(".webp","image/webp");
+        mimeTypeList.put(".heic","image/heic");
+        mimeTypeList.put(".heif","image/heif");
         mimeTypeList.put(".c","text/plain");
         mimeTypeList.put(".class","application/octet-stream");
         mimeTypeList.put(".conf","text/plain");
@@ -122,8 +127,8 @@ public class IOUtils {
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
                 //Android10以上
-                if (filePath.startsWith(storagePath+android)){
-                    //进入私有存储空间
+                if (filePath.startsWith(storagePath+android) || filePath.startsWith(fakeStartPath)){
+                    //进入私有存储空间或以虚拟路径开头
                     return Uri.fromFile(file);
                 }else {
                     //进入共享存储空间,或SD卡
@@ -223,7 +228,7 @@ public class IOUtils {
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
                 //Android10以上
-                if (filePath.startsWith(storagePath+android)){
+                if (filePath.startsWith(storagePath+android) || filePath.startsWith(fakeStartPath)){
                     //进入私有存储空间
                     try {
                         return new FileInputStream(file);
@@ -285,7 +290,7 @@ public class IOUtils {
         if (file.exists()){
             //文件物理存在
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-                if (filePath.startsWith(storagePath+android)){
+                if (filePath.startsWith(storagePath+android) || filePath.startsWith(fakeStartPath)){
                     //进入私有存储空间
                     try {
                         return new FileOutputStream(file);
@@ -439,7 +444,7 @@ public class IOUtils {
         String storagePath = Environment.getExternalStorageDirectory().getPath();
         File file;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            if (filePath.startsWith(storagePath+android)){
+            if (filePath.startsWith(storagePath+android) || filePath.startsWith(fakeStartPath)){
                 //进入私有存储空间
                 file = new File(filePath);
                 if (file.exists()){
@@ -513,6 +518,123 @@ public class IOUtils {
             return false;
         }
     }
+
+
+    /**
+     * 检查文件夹是否存在，不存在就创建文件夹
+     * @param localFilePath
+     */
+    public static void checkLocalFilePath(String localFilePath) {
+        File path = new File(localFilePath);
+        if (!path.exists()) {
+            path.mkdirs();
+        }
+    }
+
+    /**
+     * 获取MimeType的类型
+     * @param fileName
+     * @return
+     */
+    public static String getMimeType(String fileName){
+        String behind;
+        int  spot = fileName.lastIndexOf(".");
+        if (spot == 0){
+            //点在首位
+            behind = fileName.substring(spot);
+
+        }else if (spot == (fileName.length()-1)){
+            //点在末尾
+            behind = "";
+        }else if (spot != -1){
+            //点在中间
+            behind = fileName.substring(spot);
+        }else {
+            //不存在点
+            behind = "";
+        }
+        //如果只有.则去除后缀
+        if(behind.equals(".")){
+            behind = "";
+        }
+        //已经将文件名按照.分为2段,分别验证是否合法
+        behind = syncFileName(behind,true);
+        behind = behind.toLowerCase();
+        String mimeType = mimeTypeList.get(behind);
+        if (mimeType == null){
+            mimeType = "*/*";
+        }
+        return mimeType;
+    }
+
+    /**
+     * 通过文件路径得到文件名
+     * @param filePath
+     * @return
+     */
+    public static String getFileName(String filePath){
+        String[] strArr = filePath.split("/");
+        return strArr[strArr.length-1];
+    }
+
+    /***
+     * 将文件通知系统扫描，可以被整个系统检索到
+     * 比如你使用File对象在公有路径新建一个图片，在系统轮询搜索之前
+     * 这个文件都不会被系统收集，相册内也无法显示，使用本方法通知
+     * 系统去主动收录传入文件
+     * 本方法一般使用在Android9.0以下用File对象操作时才会需要
+     * Android10以上一般使用Uri操作，自带此通知逻辑
+     * 本框架已经对Android9.0以下进行了兼容，不需要单独调用此方法
+     * @param context
+     * @param filePath
+     */
+    public static void sendSystemScanBroadcast(Context context,String filePath) {
+        File file = new File(filePath);
+        if (file.exists()){
+            Uri data = Uri.fromFile(new File(filePath));
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, data));
+        }
+    }
+
+    /**
+     * 得到纯文件名
+     * @param fileName
+     * @return
+     */
+    public static String getFront(String fileName){
+        int  spot = fileName.lastIndexOf(".");
+        String front;
+        //不要判断其他情况在这个位置
+        if (spot != -1){
+            //点在中间
+            front = fileName.substring(0,spot);
+        }else {
+            //不存在点
+            front = fileName;
+        }
+        return front;
+    }
+
+    /**
+     * 得到纯后缀
+     * @param fileName
+     * @return
+     */
+    public static String getBehind(String fileName){
+        int  spot = fileName.lastIndexOf(".");
+        String behind;
+
+        //不要判断其他情况在这个位置
+        if (spot != -1){
+            //点在中间
+            behind = fileName.substring(spot);
+        }else {
+            //不存在点
+            behind = "";
+        }
+        return behind;
+    }
+
 
     @TargetApi(29)
     private static Uri getUri(String path){
@@ -696,63 +818,6 @@ public class IOUtils {
     }
 
     /**
-     * 检查文件夹是否存在，不存在就创建文件夹
-     * @param localFilePath
-     */
-    public static void checkLocalFilePath(String localFilePath) {
-        File path = new File(localFilePath);
-        if (!path.exists()) {
-            path.mkdirs();
-        }
-    }
-
-    /**
-     * 获取MimeType的类型
-     * @param fileName
-     * @return
-     */
-    public static String getMimeType(String fileName){
-        String behind;
-        int  spot = fileName.lastIndexOf(".");
-        if (spot == 0){
-            //点在首位
-            behind = fileName.substring(spot);
-
-        }else if (spot == (fileName.length()-1)){
-            //点在末尾
-            behind = "";
-        }else if (spot != -1){
-            //点在中间
-            behind = fileName.substring(spot);
-        }else {
-            //不存在点
-            behind = "";
-        }
-        //如果只有.则去除后缀
-        if(behind.equals(".")){
-            behind = "";
-        }
-        //已经将文件名按照.分为2段,分别验证是否合法
-        behind = syncFileName(behind,true);
-        behind = behind.toLowerCase();
-        String mimeType = mimeTypeList.get(behind);
-        if (mimeType == null){
-            mimeType = "*/*";
-        }
-        return mimeType;
-    }
-
-    /**
-     * 通过文件路径得到文件名
-     * @param filePath
-     * @return
-     */
-    public static String getFileName(String filePath){
-        String[] strArr = filePath.split("/");
-        return strArr[strArr.length-1];
-    }
-
-    /**
      * 将文件名后缀转换为小写，用于后续匹配mineType等操作
      * 一般文件后缀也不应为大写
      * @param fileName
@@ -788,45 +853,6 @@ public class IOUtils {
         behind = behind.toLowerCase();
 
         return front+behind;
-    }
-
-    /**
-     * 得到纯文件名
-     * @param fileName
-     * @return
-     */
-    public static String getFront(String fileName){
-        int  spot = fileName.lastIndexOf(".");
-        String front;
-        //不要判断其他情况在这个位置
-        if (spot != -1){
-            //点在中间
-            front = fileName.substring(0,spot);
-        }else {
-            //不存在点
-            front = fileName;
-        }
-        return front;
-    }
-
-    /**
-     * 得到纯后缀
-     * @param fileName
-     * @return
-     */
-    public static String getBehind(String fileName){
-        int  spot = fileName.lastIndexOf(".");
-        String behind;
-
-        //不要判断其他情况在这个位置
-        if (spot != -1){
-            //点在中间
-            behind = fileName.substring(spot);
-        }else {
-            //不存在点
-            behind = "";
-        }
-        return behind;
     }
 
     @TargetApi(29)
@@ -925,25 +951,6 @@ public class IOUtils {
             }
         }else {
             return null;
-        }
-    }
-
-    /***
-     * 将文件通知系统扫描，可以被整个系统检索到
-     * 比如你使用File对象在公有路径新建一个图片，在系统轮询搜索之前
-     * 这个文件都不会被系统收集，相册内也无法显示，使用本方法通知
-     * 系统去主动收录传入文件
-     * 本方法一般使用在Android9.0以下用File对象操作时才会需要
-     * Android10以上一般使用Uri操作，自带此通知逻辑
-     * 本框架已经对Android9.0以下进行了兼容，不需要单独调用此方法
-     * @param context
-     * @param filePath
-     */
-    public static void sendSystemScanBroadcast(Context context,String filePath) {
-        File file = new File(filePath);
-        if (file.exists()){
-            Uri data = Uri.fromFile(new File(filePath));
-            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, data));
         }
     }
 
