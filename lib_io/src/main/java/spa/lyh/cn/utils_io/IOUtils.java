@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ public class IOUtils {
     static {
         mimeTypeList = new HashMap<>();
         mimeTypeList.put(".3gp","video/3gpp");
+        mimeTypeList.put(".7z","application/x-7z-compressed");
         mimeTypeList.put(".apk","application/vnd.android.package-archive");
         mimeTypeList.put(".asf","video/x-ms-asf");
         mimeTypeList.put(".avi","video/x-msvideo");
@@ -59,14 +61,12 @@ public class IOUtils {
         mimeTypeList.put(".cpp","text/plain");
         mimeTypeList.put(".doc","application/msword");
         mimeTypeList.put(".docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-        mimeTypeList.put(".xls","application/vnd.ms-excel");
-        mimeTypeList.put(".xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         mimeTypeList.put(".exe","application/octet-stream");
         mimeTypeList.put(".flac","audio/quicktime");
         mimeTypeList.put(".flv","video/x-flv");
         mimeTypeList.put(".gif","image/gif");
         mimeTypeList.put(".gtar","application/x-gtar");
-        mimeTypeList.put(".gz","application/x-gzip");
+        mimeTypeList.put(".gz","application/gzip");
         mimeTypeList.put(".h","text/plain");
         mimeTypeList.put(".htm","text/html");
         mimeTypeList.put(".html","text/html");
@@ -74,7 +74,8 @@ public class IOUtils {
         mimeTypeList.put(".java","text/plain");
         mimeTypeList.put(".jpeg","image/jpeg");
         mimeTypeList.put(".jpg","image/jpeg");
-        mimeTypeList.put(".js","application/x-javascript");
+        mimeTypeList.put(".js","text/javascript");
+        mimeTypeList.put(".json","application/json");
         mimeTypeList.put(".ipk","application/vnd.shana.informed.package");
         mimeTypeList.put(".log","text/plain");
         mimeTypeList.put(".m3u","audio/x-mpegurl");
@@ -83,8 +84,7 @@ public class IOUtils {
         mimeTypeList.put(".m4p","audio/mp4a-latm");
         mimeTypeList.put(".m4u","video/x-m4v");
         mimeTypeList.put(".mov","video/quicktime");
-        mimeTypeList.put(".mp2","audio/x-mpeg");
-        mimeTypeList.put(".mp3","audio/x-mpeg");
+        mimeTypeList.put(".mp3","audio/mpeg");
         mimeTypeList.put(".mp4","video/mp4");
         mimeTypeList.put(".mpc","application/vnd.mpohun.certificate");
         mimeTypeList.put(".mpe","video/mpeg");
@@ -101,19 +101,22 @@ public class IOUtils {
         mimeTypeList.put(".pptx","application/vnd.openxmlformats-officedocument.presentationml.presentation");
         mimeTypeList.put(".prop","text/plain");
         mimeTypeList.put(".rc","text/plain");
+        mimeTypeList.put(".rar","application/vnd.rar");
         mimeTypeList.put(".rmvb","audio/x-pn-realaudio");
         mimeTypeList.put(".rtf","application/rtf");
         mimeTypeList.put(".sh","text/plain");
+        mimeTypeList.put(".svg","image/svg+xml");
         mimeTypeList.put(".tar","application/x-tar");
         mimeTypeList.put(".tgz","application/x-compressed");
         mimeTypeList.put(".txt","text/plain");
-        mimeTypeList.put(".wav","audio/x-wav");
+        mimeTypeList.put(".wav","audio/wav");
         mimeTypeList.put(".wma","audio/x-ms-wma");
-        mimeTypeList.put(".wmv","audio/x-ms-wmv");
-        mimeTypeList.put(".wps","application/vnd.ms-works");
-        mimeTypeList.put(".xml","text/plain");
-        mimeTypeList.put(".z","application/x-compress");
-        mimeTypeList.put(".zip","application/x-zip-compressed");
+        mimeTypeList.put(".wmv","audio/x-ms-wmv");//
+        mimeTypeList.put(".wps","application/vnd.ms-works");//
+        mimeTypeList.put(".xls","application/vnd.ms-excel");
+        mimeTypeList.put(".xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        mimeTypeList.put(".xml","application/xml");
+        mimeTypeList.put(".zip","application/zip");
         mimeTypeList.put("","*/*");
 
     }
@@ -641,8 +644,8 @@ public class IOUtils {
         String pubPath = Environment.getExternalStorageDirectory().getPath();
         String mimeType = getMimeType(path);
         if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOWNLOADS)){
-            //return MediaStore.Downloads.EXTERNAL_CONTENT_URI;//官方api竟然不好使，你敢信，你敢信？
-            return MediaStore.Files.getContentUri("external");
+            return MediaStore.Downloads.EXTERNAL_CONTENT_URI;//官方api竟然不好使，你敢信，你敢信？
+            //return MediaStore.Files.getContentUri("external");
         }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DCIM)){
             if (mimeType.startsWith("video")){
                 return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;

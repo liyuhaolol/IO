@@ -122,7 +122,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         /*String a = "/storage/emulated/0/Android/data/spa.lyh.cn.io/cache/Q/1.jpg";
         showPic(a);*/
         //dir = "/storage/80FF-1C10/Download";
-        makeFile();
+        //makeFile();
 
     }
     //getExternalCacheDir().getPath()+ "/Q"
@@ -179,13 +179,14 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
                 downloadFile(MainActivity.this,
                         "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
+                        //"https://codeload.github.com/Molunerfinn/PicGo/zip/refs/heads/dev",
                         dir,
                         IOUtils.OVERWRITE_FIRST,
                         new DisposeDownloadListener() {
                             @Override
                             public void onSuccess(String filePath, String fileName) {
                                 Toast.makeText(MainActivity.this,"下载成功",Toast.LENGTH_SHORT).show();
-                                showPic(filePath);
+                                //showPic(filePath);
                             }
 
                             @Override
