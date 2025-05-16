@@ -3,6 +3,7 @@ package spa.lyh.cn.io;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -123,11 +124,64 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         showPic(a);*/
         //dir = "/storage/80FF-1C10/Download";
         //makeFile();
+        createFile();
 
     }
     //getExternalCacheDir().getPath()+ "/Q"
     //Environment.getExternalStorageDirectory()+ "/" +Environment.DIRECTORY_DOWNLOADS+"/Q"
     //getObbDir().getPath()+"/Q"
+
+    private void createFile(){
+        String testFileName = "aaaa.zip(1)";
+        String mimeType = IOUtils.getMimeType(testFileName);
+        ContentValues values = new ContentValues();
+        String relativePath = dir.substring(Environment.getExternalStorageDirectory().getPath().length()+1);
+        //这里用download，其实用谁都无所谓，只是一个string
+        values.put(MediaStore.Downloads.DISPLAY_NAME, testFileName);
+        values.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
+        values.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
+        Uri external = getUri(dir+"/"+testFileName);
+        if (external == null){
+            Log.e("qwer","external为空");
+            return;
+        }
+        ContentResolver resolver = getContentResolver();
+        Uri insertUri;
+        try {
+            insertUri = resolver.insert(external, values);//使用ContentResolver创建需要操作的文件
+        }catch (Exception e){
+            e.printStackTrace();
+            return;
+        }
+        if (insertUri != null) {
+            FileData data = new FileData();
+            data.setFilePath(IOUtils.getFilePath(this,insertUri));
+            data.setFileName(IOUtils.getFileName(data.getFilePath()));
+            Log.e("qwer","文件名为："+data.getFileName());
+/*            ContentValues updateValues = new ContentValues();
+            updateValues.put(MediaStore.Downloads.DISPLAY_NAME, "aaaa(1).zip");
+            updateValues.put(MediaStore.Downloads.MIME_TYPE, mimeType);//MediaStore对应类型名
+            updateValues.put(MediaStore.Downloads.RELATIVE_PATH, relativePath);//公共目录下目录名
+            try {
+                int updated = resolver.update(insertUri, updateValues, null, null);
+                if (updated > 0) {
+                    Log.e("qwer","文件名修改成功");
+                    //FileData data2 = new FileData();
+                    //data2.setFilePath(IOUtils.getFilePath(this,insertUri));
+                    //data2.setFileName(IOUtils.getFileName(data2.getFilePath()));
+                    //Log.e("qwer","文件名为："+data2.getFileName());
+                }
+            } catch (Exception e) {
+                // 如果重命名失败，删除临时文件
+                e.printStackTrace();
+                Log.e("qwer","重命名失败，移除临时文件");
+                resolver.delete(insertUri, null, null);
+            }*/
+
+        }else {
+            Log.e("qwer","insertUri为空");
+        }
+    }
 
 
     private void makeFile(){
@@ -273,7 +327,39 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
 
 
-
+    @TargetApi(29)
+    private static Uri getUri(String path){
+        String pubPath = Environment.getExternalStorageDirectory().getPath();
+        String mimeType = IOUtils.getMimeType(path);
+        if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOWNLOADS)){
+            return MediaStore.Downloads.EXTERNAL_CONTENT_URI;//官方api竟然不好使，你敢信，你敢信？
+            //return MediaStore.Files.getContentUri("external");
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DCIM)){
+            if (mimeType.startsWith("video")){
+                return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+            }else {
+                return MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+            }
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_MOVIES)){
+            return MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_PICTURES)){
+            return MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_ALARMS)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_MUSIC)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_NOTIFICATIONS)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_PODCASTS)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_RINGTONES)){
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else if (path.startsWith(pubPath+"/"+Environment.DIRECTORY_DOCUMENTS)){
+            return MediaStore.Files.getContentUri("external");
+        }else{
+            return MediaStore.Files.getContentUri("external");
+        }
+    }
 
 
 
