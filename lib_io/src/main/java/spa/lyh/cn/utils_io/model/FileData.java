@@ -1,20 +1,27 @@
 package spa.lyh.cn.utils_io.model;
 
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 
+/**
+ * 建文件 / 开流的结果。
+ * 理论上所有字段都可能为 null，调用方需自行判空。
+ *
+ * <p>注意 {@link #fileName} 是**最终落盘名**：
+ * 若请求的是 {@code foo.jpg} 而返回 {@code foo (1).jpg}，
+ * 说明覆盖失败、已按 add 逻辑另存（或系统自动改名）。
+ */
 public class FileData {
-    //所有位置的参数，理论上都可能为空
-    private FileOutputStream fos;
+    private OutputStream os;
     private String fileName;
     private String filePath;
 
 
-    public FileOutputStream getFos() {
-        return fos;
+    public OutputStream getOs() {
+        return os;
     }
 
-    public void setFos(FileOutputStream fos) {
-        this.fos = fos;
+    public void setOs(OutputStream os) {
+        this.os = os;
     }
 
     public String getFileName() {

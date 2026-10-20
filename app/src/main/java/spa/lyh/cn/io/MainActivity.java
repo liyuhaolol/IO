@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -109,7 +110,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         /*try {
             *//*RandomAccessFile mFile = new RandomAccessFile(dir+"/5-140FGZ248-53.gif","r");
             Log.e("qwer",mFile.length()+"");*//*
-            FileInputStream fis = IOUtils.getFileInputStream(this,dir+"/5-140FGZ248-53.gif");
+            FileInputStream fis = IOUtils.openInputStream(this,dir+"/5-140FGZ248-53.gif");
             Log.e("qwer",fis.getChannel().size()+"");
         }catch (Exception e){
             e.printStackTrace();
@@ -191,7 +192,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         if (file.exists()){
             //存在
             try {
-                FileInputStream in = IOUtils.getFileInputStream(MainActivity.this,pathA+"/"+fileNameA);
+                InputStream in = IOUtils.openInputStream(MainActivity.this,pathA+"/"+fileNameA);
                 if (in != null){
                     BufferedReader br = new BufferedReader(new InputStreamReader(in));
                     String lineTxt = br.readLine();
@@ -206,9 +207,9 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
         }else {
             //不存在
             try {
-                FileData data = IOUtils.createFileOutputStream(this,pathA,fileNameA,IOUtils.OVERWRITE_FIRST);
+                FileData data = IOUtils.createOutputStream(this,pathA,fileNameA);
                 if (data != null){
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getFos()));
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getOs()));
                     out.write("12345");
                     out.flush();
                     out.close();
@@ -234,12 +235,12 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                     "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
                     //"https://codeload.github.com/Molunerfinn/PicGo/zip/refs/heads/dev",
                     dir,
-                    IOUtils.OVERWRITE_FIRST,
+                    true,
                     new DisposeDownloadListener() {
                         @Override
                         public void onSuccess(String filePath, String fileName) {
                             Toast.makeText(MainActivity.this,"下载成功",Toast.LENGTH_SHORT).show();
-                            //showPic(filePath);
+                            showPic(filePath);
                         }
 
                         @Override
@@ -254,9 +255,9 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
                     });
         }else if (v.getId() == R.id.insert){
             try {
-                FileData data = IOUtils.createFileOutputStream(this,dir,fileName,IOUtils.OVERWRITE_FIRST);
+                FileData data = IOUtils.createOutputStream(this,dir,fileName);
                 if (data != null){
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getFos()));
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getOs()));
                     out.write("测试文档1");
                     out.flush();
                     out.close();
@@ -269,7 +270,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
             }
         }else if (v.getId() == R.id.insert2){
             try {
-                FileOutputStream fileOut = IOUtils.getFileOutputStream(MainActivity.this,dir+"/"+fileName);
+                OutputStream fileOut = IOUtils.openOutputStream(MainActivity.this,dir+"/"+fileName);
                 BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fileOut));
                 out.write("测试文档2");
                 out.flush();
@@ -288,11 +289,11 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
     }
 
 
-    public static Call downloadFile(Context context, String url, String path, int mod,DisposeDownloadListener listener) {
+    public static Call downloadFile(Context context, String url, String path, boolean addOnly,DisposeDownloadListener listener) {
         RequestParams params = new RequestParams();
         return CommonOkHttpClient.getInstance(context).downloadFile(context,
                 CommonRequest.createDownloadRequest(url, null, params, true),
-                new DisposeDataHandle(listener, path, true),mod);
+                new DisposeDataHandle(listener, path, true),addOnly);
     }
 
 
@@ -306,7 +307,7 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
     private void readShow(){
         try {
-            FileInputStream in = IOUtils.getFileInputStream(MainActivity.this,dir+"/"+fileName);
+            InputStream in = IOUtils.openInputStream(MainActivity.this,dir+"/"+fileName);
             if (in != null){
                 BufferedReader br = new BufferedReader(new InputStreamReader(in));
                 String lineTxt = br.readLine();

@@ -25,4 +25,10 @@ android {
 
 }
 
+dependencies {
+    // FileProvider（getShareableUri）
+    //千万别升级，会导致最低版本不能是19
+    implementation("androidx.core:core:1.13.0")
+}
+
 

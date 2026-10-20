@@ -9,9 +9,9 @@ import android.os.Message;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DecimalFormat;
 
 import okhttp3.Call;
@@ -57,14 +57,14 @@ public class CommonFileCallback extends CommonBase implements Callback {
 
     private Context context;
 
-    private int mod;
+    private boolean addOnly;
 
-    public CommonFileCallback(Context context,DisposeDataHandle handle,int mod) {
+    public CommonFileCallback(Context context,DisposeDataHandle handle,boolean addOnly) {
         this.mListener = handle.downloadListener;
         this.mFilePath = handle.mSource;
         this.devMode = handle.devMode;
         this.context = context;
-        this.mod = mod;
+        this.addOnly = addOnly;
         this.mDeliveryHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -141,7 +141,7 @@ public class CommonFileCallback extends CommonBase implements Callback {
         //checkLocalFilePath(mFilePath);
         //String filePath = mFilePath+"/"+filename;
         //File file = new File(filePath);
-        FileOutputStream fos = null;
+        OutputStream fos = null;
         FileData data;
 
 
@@ -154,12 +154,12 @@ public class CommonFileCallback extends CommonBase implements Callback {
         try {
 
             inputStream  = response.body().byteStream();//输入流
-            data  = IOUtils.createFileOutputStream(context,mFilePath,filename,mod);
-            if (data == null || data.getFos() == null){
+            data  = IOUtils.createOutputStream(context,mFilePath,filename,addOnly);
+            if (data == null || data.getOs() == null){
                 mDeliveryHandler.obtainMessage(FAILURE_MESSAGE, new OkHttpException(OkHttpException.OTHER_ERROR, EMPTY_RESPONSE)).sendToTarget();
                 return;
             }
-            fos = data.getFos();
+            fos = data.getOs();
             sumLength = response.body().contentLength();//文件总大小
 
 

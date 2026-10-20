@@ -1,1 +1,20 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          authority 带 ${applicationId}，避免多 App 同装一台设备时冲突。
+          exported=false + grantUriPermissions=true：不直接暴露，靠 Intent 临时授权。
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.utils_io.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/utils_io_file_paths" />
+        </provider>
+    </application>
+
+</manifest>
