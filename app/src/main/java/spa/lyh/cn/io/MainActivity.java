@@ -224,71 +224,66 @@ public class MainActivity extends PermissionActivity implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.download:
-                //http://edge.ivideo.sina.com.cn/6265508.flv?KID=sina,viask&Expires=1582646400&ssig=bs686OJicS
-                //https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3208238474,2536510412&fm=26&gp=0.jpg
-                //https://downloads.openwrt.org/releases/19.07.1/targets/x86/64/packages/comgt-directip_0.32-32_x86_64.ipk
-                //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
+        if (v.getId() == R.id.download){
+            //http://edge.ivideo.sina.com.cn/6265508.flv?KID=sina,viask&Expires=1582646400&ssig=bs686OJicS
+            //https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=3208238474,2536510412&fm=26&gp=0.jpg
+            //https://downloads.openwrt.org/releases/19.07.1/targets/x86/64/packages/comgt-directip_0.32-32_x86_64.ipk
+            //http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif
 
-                downloadFile(MainActivity.this,
-                        "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
-                        //"https://codeload.github.com/Molunerfinn/PicGo/zip/refs/heads/dev",
-                        dir,
-                        IOUtils.OVERWRITE_FIRST,
-                        new DisposeDownloadListener() {
-                            @Override
-                            public void onSuccess(String filePath, String fileName) {
-                                Toast.makeText(MainActivity.this,"下载成功",Toast.LENGTH_SHORT).show();
-                                //showPic(filePath);
-                            }
+            downloadFile(MainActivity.this,
+                    "http://www.lanrentuku.com/savepic/img/allimg/1407/5-140FGZ248-53.gif",
+                    //"https://codeload.github.com/Molunerfinn/PicGo/zip/refs/heads/dev",
+                    dir,
+                    IOUtils.OVERWRITE_FIRST,
+                    new DisposeDownloadListener() {
+                        @Override
+                        public void onSuccess(String filePath, String fileName) {
+                            Toast.makeText(MainActivity.this,"下载成功",Toast.LENGTH_SHORT).show();
+                            //showPic(filePath);
+                        }
 
-                            @Override
-                            public void onFailure(Object reasonObj) {
-                                Toast.makeText(MainActivity.this,"下载失败",Toast.LENGTH_SHORT).show();
-                            }
+                        @Override
+                        public void onFailure(Object reasonObj) {
+                            Toast.makeText(MainActivity.this,"下载失败",Toast.LENGTH_SHORT).show();
+                        }
 
-                            @Override
-                            public void onProgress(boolean haveFileSize, int progress, String currentSize, String sumSize) {
+                        @Override
+                        public void onProgress(boolean haveFileSize, int progress, String currentSize, String sumSize) {
 
-                            }
-                        });
-                break;
-            case R.id.insert:
-                try {
-                    FileData data = IOUtils.createFileOutputStream(this,dir,fileName,IOUtils.OVERWRITE_FIRST);
-                    if (data != null){
-                        BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getFos()));
-                        out.write("测试文档1");
-                        out.flush();
-                        out.close();
-                        readShow();
-                    }else {
-                        Log.e("qwer","无法创建文件");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            case R.id.insert2:
-                try {
-                    FileOutputStream fileOut = IOUtils.getFileOutputStream(MainActivity.this,dir+"/"+fileName);
-                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fileOut));
-                    out.write("测试文档2");
+                        }
+                    });
+        }else if (v.getId() == R.id.insert){
+            try {
+                FileData data = IOUtils.createFileOutputStream(this,dir,fileName,IOUtils.OVERWRITE_FIRST);
+                if (data != null){
+                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(data.getFos()));
+                    out.write("测试文档1");
                     out.flush();
                     out.close();
                     readShow();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            case R.id.delete:
-                if (IOUtils.delete(MainActivity.this,dir+"/"+fileName)){
-                    Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
                 }else {
-                    Toast.makeText(MainActivity.this,"删除失败",Toast.LENGTH_SHORT).show();
+                    Log.e("qwer","无法创建文件");
                 }
-                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else if (v.getId() == R.id.insert2){
+            try {
+                FileOutputStream fileOut = IOUtils.getFileOutputStream(MainActivity.this,dir+"/"+fileName);
+                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fileOut));
+                out.write("测试文档2");
+                out.flush();
+                out.close();
+                readShow();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else if (v.getId() == R.id.delete){
+            if (IOUtils.delete(MainActivity.this,dir+"/"+fileName)){
+                Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(MainActivity.this,"删除失败",Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
