@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider 可分享的根目录。
+  与 IOUtils.isAppPrivatePath 的私有目录对齐，并覆盖主卷公共存储，
+  保证 getShareableUri 能把常见路径转成 content://。
+-->
+<paths>
+    <!-- 内部存储 -->
+    <files-path name="internal_files" path="." />
+    <cache-path name="internal_cache" path="." />
+
+    <!-- 应用专属外部目录 /Android/data/<pkg>/files|cache -->
+    <external-files-path name="external_files" path="." />
+    <external-cache-path name="external_cache" path="." />
+
+    <!-- 主卷公共存储（Pictures / Download / DCIM 等） -->
+    <external-path name="external_storage" path="." />
+
+    <!--
+      兜底覆盖外置 SD 卡等非主卷挂载点。
+      root-path 不是公开文档 API，但 FileProvider 长期支持；用于库要接受任意路径的场景。
+    -->
+    <root-path name="storage_root" path="." />
+</paths>
