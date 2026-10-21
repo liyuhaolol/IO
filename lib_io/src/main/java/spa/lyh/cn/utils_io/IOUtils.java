@@ -6,6 +6,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -520,6 +521,125 @@ public class IOUtils {
         return deleteUriQuietly(context, uri) > 0;
     }
 
+    /**
+     * 获取文件大小（字节）。
+     *
+     * <p>分情况取值（效率与覆盖兼顾）：
+     * <ol>
+     *   <li>File API 能 {@code stat} 到（私有目录、已放行的媒体等）→ {@link File#length()}，本地调用最快；</li>
+     *   <li>File 不可见时（分区存储下的非媒体文件等）→ 转 MediaStore 查 {@code SIZE} 列。</li>
+     * </ol>
+     *
+     * <p>注意：不要用 {@code InputStream.available()} 当文件大小，那只是缓冲估计值。
+     *
+     * @param context  上下文
+     * @param filePath 绝对路径，支持 {@code /sdcard} 等常见别名
+     * @return 文件字节数；不存在、无权限或无法确定时返回 {@code -1}
+     *         （{@code 0} 是合法的空文件大小，故未知不用 0 表示）
+     */
+    public static long getFileSize(Context context, String filePath){
+        if (TextUtils.isEmpty(filePath)){
+            return -1;
+        }
+        String absPath = resolveAbsolutePath(new File(filePath));
+        File file = new File(absPath);
+
+        //1) File API 快速路径
+        //   length() 在无权限/不可见时返回 0，因此必须先 exists() 且 >0 才敢信
+        //   真正的空文件会落到下一步 MediaStore，拿到真实 0
+        if (file.exists()){
+            long len = file.length();
+            if (len > 0){
+                return len;
+            }
+        }
+
+        //2) MediaStore 兜底（API 29+ 共享存储才有媒体库记录；私有目录查不到属正常）
+        if (context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                && !isAppPrivatePath(context, absPath)){
+            Uri mediaUri = queryMediaStoreUri(context, absPath, filePath);
+            if (mediaUri != null){
+                return getFileSize(context, mediaUri);
+            }
+        }
+
+        //File 能看见但是空文件（exists && length==0）
+        if (file.exists() && file.isFile()){
+            return file.length(); // 0
+        }
+        return -1;
+    }
+
+    /**
+     * 获取 Uri 对应文件大小（字节）。
+     * 优先查 {@link MediaStore.MediaColumns#SIZE}，再退回 {@code AssetFileDescriptor.getLength()}。
+     *
+     * @return 字节数；未知或无权限时返回 {@code -1}
+     */
+    public static long getFileSize(Context context, Uri uri){
+        if (context == null || uri == null){
+            return -1;
+        }
+
+        //file:// 不用走 Provider
+        if (ContentResolver.SCHEME_FILE.equals(uri.getScheme()) || uri.getScheme() == null){
+            String path = uri.getPath();
+            return TextUtils.isEmpty(path) ? -1 : getFileSize(context, path);
+        }
+
+        //1) 查 SIZE 列
+        long size = querySizeColumn(context, uri);
+        if (size >= 0){
+            return size;
+        }
+
+        //2) AssetFileDescriptor：部分 provider 不回 SIZE 列但能给长度
+        AssetFileDescriptor fd = null;
+        try {
+            fd = context.getContentResolver().openAssetFileDescriptor(uri, "r");
+            if (fd != null){
+                long length = fd.getLength();
+                return length >= 0 ? length : -1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (fd != null){
+                try {
+                    fd.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 查 MediaStore 的 SIZE 列；缺失或异常返回 -1。
+     */
+    private static long querySizeColumn(Context context, Uri uri){
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(
+                    uri,
+                    new String[]{MediaStore.MediaColumns.SIZE},
+                    null, null, null);
+            if (cursor != null && cursor.moveToFirst()){
+                int index = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
+                if (index >= 0 && !cursor.isNull(index)){
+                    return cursor.getLong(index);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null){
+                cursor.close();
+            }
+        }
+        return -1;
+    }
 
     /**
      * 确保目录存在且确为目录。
